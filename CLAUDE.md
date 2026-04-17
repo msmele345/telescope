@@ -1,9 +1,13 @@
 # Project Name
-
 Telecope
 
 # Project Details:
 See @plans/telescope-star-map.md
+
+# Run Commands:
+- npm run dev 
+- npm test 
+- npm run build 
 
 # Git Strategy and Instructions
 - Create feature branches off of develop for each new feature or task. Name branches using the format `feature/short-description` (e.g., `feature/spotify-integration`).
