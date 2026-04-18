@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { buildStarFieldAttributes } from "@/lib/star-catalog/geometry";
+import {
+  buildHorizonStarFieldAttributes,
+  buildStarFieldAttributes,
+} from "@/lib/star-catalog/geometry";
 import type { Star } from "@/lib/star-catalog/types";
 
 const sirius: Star = {
@@ -66,5 +69,39 @@ describe("buildStarFieldAttributes", () => {
     expect(attrs.positions).toHaveLength(0);
     expect(attrs.sizes).toHaveLength(0);
     expect(attrs.brightness).toHaveLength(0);
+  });
+});
+
+describe("buildHorizonStarFieldAttributes", () => {
+  const observer = { lat: 44.98, lng: -93.27 }; // Minneapolis
+  const when = new Date("2026-01-01T06:00:00Z");
+
+  it("places each star on a sphere of the given radius", () => {
+    const r = 50;
+    const attrs = buildHorizonStarFieldAttributes([sirius, polaris, faint], observer, when, r);
+    for (let i = 0; i < 3; i++) {
+      const x = attrs.positions[i * 3];
+      const y = attrs.positions[i * 3 + 1];
+      const z = attrs.positions[i * 3 + 2];
+      expect(Math.hypot(x, y, z)).toBeCloseTo(r, 4);
+    }
+  });
+
+  it("places Polaris near altitude=observer latitude (y/r ≈ sin lat)", () => {
+    const r = 50;
+    const attrs = buildHorizonStarFieldAttributes([polaris], observer, when, r);
+    const y = attrs.positions[1];
+    const expected = r * Math.sin((observer.lat * Math.PI) / 180);
+    // Polaris sits ~0.74° off the pole, so allow ~1% radial slop.
+    expect(Math.abs(y - expected)).toBeLessThan(r * 0.02);
+  });
+
+  it("places Polaris near due north (x ≈ 0, z < 0)", () => {
+    const r = 50;
+    const attrs = buildHorizonStarFieldAttributes([polaris], observer, when, r);
+    const x = attrs.positions[0];
+    const z = attrs.positions[2];
+    expect(Math.abs(x)).toBeLessThan(r * 0.03);
+    expect(z).toBeLessThan(0);
   });
 });

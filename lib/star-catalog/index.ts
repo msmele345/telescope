@@ -4,5 +4,8 @@ export type { Vec3 } from "./coords";
 export { magnitudeToSize, magnitudeToBrightness } from "./magnitude";
 export type { MagnitudeSizeOptions } from "./magnitude";
 export { loadCatalog, DEFAULT_CATALOG_URL } from "./loader";
-export { buildStarFieldAttributes } from "./geometry";
+export {
+  buildStarFieldAttributes,
+  buildHorizonStarFieldAttributes,
+} from "./geometry";
 export type { StarFieldAttributes } from "./geometry";
