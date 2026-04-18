@@ -5,22 +5,33 @@ import { OrbitControls } from "@react-three/drei";
 import { useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
 import {
-  buildStarFieldAttributes,
+  buildHorizonStarFieldAttributes,
   loadCatalog,
   type Star,
 } from "@/lib/star-catalog";
+import { DEFAULT_OBSERVER, type ObserverLocation } from "@/lib/observer";
+import Horizon from "./Horizon";
 
 const SPHERE_RADIUS = 50;
 
-export default function SkyCanvas() {
+export interface SkyCanvasProps {
+  observer?: ObserverLocation;
+  when?: Date;
+}
+
+export default function SkyCanvas({
+  observer = DEFAULT_OBSERVER,
+  when,
+}: SkyCanvasProps) {
   return (
     <Canvas
-      camera={{ position: [0, 0, 0.0001], fov: 75, near: 0.00001, far: 1000 }}
+      camera={{ position: [0, -0.00004, 0.0001], fov: 75, near: 0.00001, far: 1000 }}
       gl={{ antialias: true }}
       style={{ width: "100vw", height: "100vh", background: "#000011" }}
     >
       <color attach="background" args={["#000011"]} />
-      <StarField />
+      <StarField observer={observer} when={when} />
+      <Horizon radius={SPHERE_RADIUS} />
       <OrbitControls
         enableZoom={false}
         enablePan={false}
@@ -31,7 +42,12 @@ export default function SkyCanvas() {
   );
 }
 
-function StarField() {
+interface StarFieldProps {
+  observer: ObserverLocation;
+  when?: Date;
+}
+
+function StarField({ observer, when }: StarFieldProps) {
   const [stars, setStars] = useState<Star[] | null>(null);
 
   useEffect(() => {
@@ -51,13 +67,18 @@ function StarField() {
 
   const geometry = useMemo(() => {
     if (!stars) return null;
-    const attrs = buildStarFieldAttributes(stars, SPHERE_RADIUS);
+    const attrs = buildHorizonStarFieldAttributes(
+      stars,
+      observer,
+      when ?? new Date(),
+      SPHERE_RADIUS
+    );
     const g = new THREE.BufferGeometry();
     g.setAttribute("position", new THREE.BufferAttribute(attrs.positions, 3));
     g.setAttribute("size", new THREE.BufferAttribute(attrs.sizes, 1));
     g.setAttribute("brightness", new THREE.BufferAttribute(attrs.brightness, 1));
     return g;
-  }, [stars]);
+  }, [stars, observer, when]);
 
   const material = useMemo(
     () =>
