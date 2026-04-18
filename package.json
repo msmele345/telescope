@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "env:pull": "vercel env pull .env.local && cat scripts/env-aliases.sh >> .env.local"
   },
   "dependencies": {
     "@react-three/drei": "^9.114.0",

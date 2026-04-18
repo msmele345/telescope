@@ -5,13 +5,15 @@
 - DB: PostgreSQL vercel
 - Key dirs: src/app/ (routes), src/components/
 
-# Project Details:
-See @plans/telescope-star-map.md
+# Project Overview and Plan:
+See @PRD.md to review project goals
+See @plans/telescope-star-map.md for formal plan
 
 # Run Commands:
 - npm run dev 
 - npm test 
 - npm run build 
+- npm run env:pull  # use this instead of `vercel env pull` — it also appends unprefixed POSTGRES_URL/DATABASE_URL aliases from scripts/env-aliases.sh
 
 # Git Remote:
 https://github.com/msmele345/telescope/
