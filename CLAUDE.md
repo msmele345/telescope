@@ -1,5 +1,9 @@
-# Project Name
-Telecope
+## WHAT — Stack & Structure
+- Project Name: Telescope
+- Runtime: Node.js 22, npm 10.9.4
+- Framework: Next.js 14.2
+- DB: PostgreSQL vercel
+- Key dirs: src/app/ (routes), src/components/
 
 # Project Details:
 See @plans/telescope-star-map.md
