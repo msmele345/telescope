@@ -32,6 +32,9 @@ coverage/
 # vercel
 .vercel
 
+# playwright mcp scratch
+.playwright-mcp/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
