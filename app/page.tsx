@@ -83,9 +83,9 @@ export default function Home() {
     <main style={{ height: "100vh", width: "100vw" }}>
       <SkyCanvas
         observer={observer ?? DEFAULT_OBSERVER}
+        when={when}
         onSelectStar={handleSelectStar}
       />
-      <SkyCanvas observer={observer ?? DEFAULT_OBSERVER} when={when} />
       <LocationPrompt observer={observer} onResolve={handleResolve} />
       <TimeScrubber controller={controller} />
       <StarPopup star={selectedStar} onClose={handleClosePopup} />
