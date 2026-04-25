@@ -10,9 +10,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "env:pull": "vercel env pull .env.local && cat scripts/env-aliases.sh >> .env.local",
-    "data:fetch": "node scripts/fetch-bsc.mjs && node scripts/fetch-zipcodes.mjs",
+    "data:fetch": "node scripts/fetch-bsc.mjs && node scripts/fetch-zipcodes.mjs && node scripts/fetch-constellation-lines.mjs",
     "data:fetch:bsc": "node scripts/fetch-bsc.mjs",
-    "data:fetch:zips": "node scripts/fetch-zipcodes.mjs"
+    "data:fetch:zips": "node scripts/fetch-zipcodes.mjs",
+    "data:fetch:lines": "node scripts/fetch-constellation-lines.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^9.114.0",

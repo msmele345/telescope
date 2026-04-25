@@ -1,8 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import LocationPrompt from "@/components/LocationPrompt";
+import StarPopup from "@/components/StarPopup";
+import type { Star } from "@/lib/star-catalog";
 import {
   DEFAULT_OBSERVER,
   loadSavedObserver,
@@ -16,6 +18,7 @@ const SkyCanvas = dynamic(() => import("@/components/SkyCanvas"), {
 
 export default function Home() {
   const [observer, setObserver] = useState<SavedObserver | null>(null);
+  const [selectedStar, setSelectedStar] = useState<Star | null>(null);
 
   useEffect(() => {
     const saved = loadSavedObserver();
@@ -27,10 +30,22 @@ export default function Home() {
     saveObserver(next);
   };
 
+  const handleSelectStar = useCallback((star: Star) => {
+    setSelectedStar(star);
+  }, []);
+
+  const handleClosePopup = useCallback(() => {
+    setSelectedStar(null);
+  }, []);
+
   return (
     <main style={{ height: "100vh", width: "100vw" }}>
-      <SkyCanvas observer={observer ?? DEFAULT_OBSERVER} />
+      <SkyCanvas
+        observer={observer ?? DEFAULT_OBSERVER}
+        onSelectStar={handleSelectStar}
+      />
       <LocationPrompt observer={observer} onResolve={handleResolve} />
+      <StarPopup star={selectedStar} onClose={handleClosePopup} />
     </main>
   );
 }

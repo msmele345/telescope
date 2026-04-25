@@ -14,6 +14,7 @@ See @plans/telescope-star-map.md for formal plan
 - npm test 
 - npm run build 
 - npm run env:pull  # use this instead of `vercel env pull` — it also appends unprefixed POSTGRES_URL/DATABASE_URL aliases from scripts/env-aliases.sh
+- npx vercel --yes # for deploying current branch to vercel preview
 
 # Git Remote:
 https://github.com/msmele345/telescope/
