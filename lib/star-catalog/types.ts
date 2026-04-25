@@ -7,4 +7,6 @@ export interface Star {
   bayer?: string;
   constellation?: string;
   colorK?: number;
+  /** Distance in light-years, derived from Hipparcos/BSC parallax. */
+  distLy?: number;
 }

@@ -230,3 +230,33 @@ Ship the parallel DOM-based searchable list of stars and constellations as the a
 - [ ] App is usable on tablet (portrait + landscape).
 - [ ] Initial JS bundle is under 500kb gzipped.
 - [ ] Sustained 60fps on a mid-tier laptop with all 9k stars + planets + DSOs visible.
+
+---
+
+## Phase 12: Hipparcos parallax cross-match (data-quality follow-up)
+
+**User stories**: 5 (popup quality)
+
+### Context
+
+In Phase 5 we backfilled `distLy` from the Yale Bright Star Catalog's `Parallax` column. That covers ~3,100 of 9,096 stars (~34%); the rest hide the Distance row in the popup because BSC's mid-20th-century parallaxes are absent or unreliable for fainter stars. Hipparcos (1997) measures parallax for ~118k stars at sub-milliarcsecond precision — virtually all BSC entries are in there, cross-referenced by `HD` or `HIP` id.
+
+### What to build
+
+Evaluate and, if feasible, ship a Hipparcos cross-match that promotes the popup's distance coverage from ~34% to >95% with significantly better accuracy on the bright nearby stars where the current values are visibly off (Polaris currently reads 466 ly; Hipparcos puts it at 433).
+
+Decision points to reach during the spike:
+
+- **Source.** VizieR's I/239 (Hipparcos main catalog) is the canonical home. Public-domain. Available as a flat file (~50 MB raw, ~5 MB after stripping to id + parallax). Confirm license redistribution is OK, or fetch at build time only.
+- **Join key.** BSC has `HD` (Henry Draper) numbers; Hipparcos is keyed by `HIP`. The cleanest join is via `HD` (already in `bsc5-all.json`) → Hipparcos `HD` cross-reference. Spot-check coverage: most BSC entries should have an `HD` id.
+- **Fetch strategy.** Add `scripts/fetch-hipparcos.mjs` that downloads, joins, and emits a `{ HR → distLy }` patch file, or merges directly into `bsc5.json` during the existing fetch. Probably the latter — keeps the runtime data shape unchanged.
+- **Negative-parallax handling.** Hipparcos still produces some negative parallaxes for distant stars (statistical noise). Continue to filter `parallax > 0` and prefer Hipparcos error-weighted distance (`distLy = 3.262 / Plx` with σ < threshold) over BSC.
+- **Fallback chain.** Hipparcos first, BSC second, omit if neither.
+
+### Acceptance criteria
+
+- [ ] Spike report covers: data availability, license, join coverage % via HD, file size impact, and a side-by-side accuracy comparison on 10 well-known stars.
+- [ ] If the spike is favorable: `distLy` is populated for >95% of bundled stars.
+- [ ] Famous-star distances match accepted modern values within ~2% (Sirius 8.6, Vega 25, Polaris 433, Betelgeuse 640).
+- [ ] No regression in bundle size beyond +500 KB gzipped on `public/data/bsc5.json`.
+- [ ] If the spike is unfavorable, document why and close the phase without shipping.

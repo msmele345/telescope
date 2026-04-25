@@ -1,10 +1,12 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import LocationPrompt from "@/components/LocationPrompt";
 import TimeScrubber from "@/components/TimeScrubber";
 import { TimeController, type TimeSnapshot } from "@/lib/time-controller";
+import StarPopup from "@/components/StarPopup";
+import type { Star } from "@/lib/star-catalog";
 import {
   DEFAULT_OBSERVER,
   loadSavedObserver,
@@ -24,6 +26,7 @@ export default function Home() {
   const [observer, setObserver] = useState<SavedObserver | null>(null);
   const controller = useMemo(() => new TimeController(), []);
   const [when, setWhen] = useState<Date>(() => new Date(controller.getVirtualMs()));
+  const [selectedStar, setSelectedStar] = useState<Star | null>(null);
 
   useEffect(() => {
     const saved = loadSavedObserver();
@@ -68,11 +71,24 @@ export default function Home() {
     saveObserver(next);
   };
 
+  const handleSelectStar = useCallback((star: Star) => {
+    setSelectedStar(star);
+  }, []);
+
+  const handleClosePopup = useCallback(() => {
+    setSelectedStar(null);
+  }, []);
+
   return (
     <main style={{ height: "100vh", width: "100vw" }}>
-      <SkyCanvas observer={observer ?? DEFAULT_OBSERVER} when={when} />
+      <SkyCanvas
+        observer={observer ?? DEFAULT_OBSERVER}
+        when={when}
+        onSelectStar={handleSelectStar}
+      />
       <LocationPrompt observer={observer} onResolve={handleResolve} />
       <TimeScrubber controller={controller} />
+      <StarPopup star={selectedStar} onClose={handleClosePopup} />
     </main>
   );
 }
