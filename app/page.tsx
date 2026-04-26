@@ -6,7 +6,11 @@ import LocationPrompt from "@/components/LocationPrompt";
 import TimeScrubber from "@/components/TimeScrubber";
 import { TimeController, type TimeSnapshot } from "@/lib/time-controller";
 import StarPopup from "@/components/StarPopup";
+import PlanetPopup from "@/components/PlanetPopup";
+import MessierPopup from "@/components/MessierPopup";
 import type { Star } from "@/lib/star-catalog";
+import type { SolarBody } from "@/lib/solar-system";
+import type { MessierObject } from "@/lib/messier";
 import {
   DEFAULT_OBSERVER,
   loadSavedObserver,
@@ -22,11 +26,16 @@ const SkyCanvas = dynamic(() => import("@/components/SkyCanvas"), {
 // At 60x/3600x the sky still moves smoothly at 4Hz; 1x is visually identical.
 const SKY_UPDATE_HZ = 4;
 
+type Selection =
+  | { kind: "star"; data: Star }
+  | { kind: "planet"; data: SolarBody }
+  | { kind: "messier"; data: MessierObject };
+
 export default function Home() {
   const [observer, setObserver] = useState<SavedObserver | null>(null);
   const controller = useMemo(() => new TimeController(), []);
   const [when, setWhen] = useState<Date>(() => new Date(controller.getVirtualMs()));
-  const [selectedStar, setSelectedStar] = useState<Star | null>(null);
+  const [selection, setSelection] = useState<Selection | null>(null);
 
   useEffect(() => {
     const saved = loadSavedObserver();
@@ -72,11 +81,19 @@ export default function Home() {
   };
 
   const handleSelectStar = useCallback((star: Star) => {
-    setSelectedStar(star);
+    setSelection({ kind: "star", data: star });
+  }, []);
+
+  const handleSelectPlanet = useCallback((body: SolarBody) => {
+    setSelection({ kind: "planet", data: body });
+  }, []);
+
+  const handleSelectMessier = useCallback((object: MessierObject) => {
+    setSelection({ kind: "messier", data: object });
   }, []);
 
   const handleClosePopup = useCallback(() => {
-    setSelectedStar(null);
+    setSelection(null);
   }, []);
 
   return (
@@ -85,10 +102,20 @@ export default function Home() {
         observer={observer ?? DEFAULT_OBSERVER}
         when={when}
         onSelectStar={handleSelectStar}
+        onSelectPlanet={handleSelectPlanet}
+        onSelectMessier={handleSelectMessier}
       />
       <LocationPrompt observer={observer} onResolve={handleResolve} />
       <TimeScrubber controller={controller} />
-      <StarPopup star={selectedStar} onClose={handleClosePopup} />
+      {selection?.kind === "star" && (
+        <StarPopup star={selection.data} onClose={handleClosePopup} />
+      )}
+      {selection?.kind === "planet" && (
+        <PlanetPopup body={selection.data} onClose={handleClosePopup} />
+      )}
+      {selection?.kind === "messier" && (
+        <MessierPopup object={selection.data} onClose={handleClosePopup} />
+      )}
     </main>
   );
 }
