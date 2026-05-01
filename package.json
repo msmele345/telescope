@@ -13,13 +13,18 @@
     "data:fetch": "node scripts/fetch-bsc.mjs && node scripts/fetch-zipcodes.mjs && node scripts/fetch-constellation-lines.mjs",
     "data:fetch:bsc": "node scripts/fetch-bsc.mjs",
     "data:fetch:zips": "node scripts/fetch-zipcodes.mjs",
-    "data:fetch:lines": "node scripts/fetch-constellation-lines.mjs"
+    "data:fetch:lines": "node scripts/fetch-constellation-lines.mjs",
+    "db:migrate": "node scripts/db-migrate.mjs"
   },
   "dependencies": {
+    "@auth/pg-adapter": "^1.11.2",
     "@react-three/drei": "^9.114.0",
     "@react-three/fiber": "^8.17.10",
     "astronomy-engine": "^2.1.19",
     "next": "^14.2.0",
+    "next-auth": "^5.0.0-beta.31",
+    "nodemailer": "^7.0.13",
+    "pg": "^8.20.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "three": "^0.169.0"
@@ -29,10 +34,14 @@
     "@testing-library/react": "^16.0.1",
     "@testing-library/user-event": "^14.6.1",
     "@types/node": "^22.7.0",
+    "@types/nodemailer": "^8.0.0",
+    "@types/pg": "^8.20.0",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.0",
     "@types/three": "^0.169.0",
     "@vitejs/plugin-react": "^4.3.2",
+    "dotenv": "^17.4.2",
+    "dotenv-expand": "^13.0.0",
     "jsdom": "^25.0.1",
     "typescript": "^5.6.2",
     "vitest": "^2.1.1"
