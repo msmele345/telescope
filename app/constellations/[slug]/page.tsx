@@ -5,6 +5,10 @@ import {
   CONSTELLATIONS,
   getConstellationBySlug,
 } from "@/lib/constellation";
+import { hasLesson } from "@/lib/constellation/lessons";
+import { getLessonComponent } from "@/lib/constellation/lessonComponents";
+import { getConstellationMembers } from "@/lib/constellation/server";
+import ConstellationContent from "@/components/ConstellationContent";
 
 interface PageProps {
   params: { slug: string };
@@ -17,15 +21,21 @@ export function generateStaticParams() {
 export function generateMetadata({ params }: PageProps): Metadata {
   const c = getConstellationBySlug(params.slug);
   if (!c) return { title: "Constellation — Telescope" };
+  const description = hasLesson(c.slug)
+    ? `Mythology and lessons for the ${c.name} constellation.`
+    : `${c.name} — coming soon to Telescope.`;
   return {
     title: `${c.name} — Telescope`,
-    description: `Mythology, lore, and lessons for the ${c.name} constellation.`,
+    description,
   };
 }
 
-export default function ConstellationPage({ params }: PageProps) {
+export default async function ConstellationPage({ params }: PageProps) {
   const c = getConstellationBySlug(params.slug);
   if (!c) notFound();
+
+  const Lesson = getLessonComponent(c.slug);
+  const members = Lesson ? null : await getConstellationMembers(c.abbr);
 
   return (
     <main style={pageStyle}>
@@ -33,18 +43,16 @@ export default function ConstellationPage({ params }: PageProps) {
         ← Back to the sky
       </Link>
       <header style={headerStyle}>
-        <p style={eyebrowStyle}>{c.abbr} · {c.genitive}</p>
+        <p style={eyebrowStyle}>
+          {c.abbr} · {c.genitive}
+        </p>
         <h1 style={titleStyle}>{c.name}</h1>
       </header>
-      <section style={comingSoonStyle}>
-        <p>
-          Mythology and lessons for <strong>{c.name}</strong> are coming soon.
-        </p>
-        <p style={hintStyle}>
-          In the meantime, head back to the sky map to see {c.name} in the
-          context of the surrounding stars.
-        </p>
-      </section>
+      <ConstellationContent
+        name={c.name}
+        lesson={Lesson ? <Lesson /> : null}
+        members={members}
+      />
     </main>
   );
 }
@@ -56,7 +64,7 @@ const pageStyle: React.CSSProperties = {
   color: "#e5ecff",
   fontFamily:
     "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
-  lineHeight: 1.55,
+  lineHeight: 1.65,
 };
 
 const backLinkStyle: React.CSSProperties = {
@@ -84,18 +92,4 @@ const titleStyle: React.CSSProperties = {
   fontSize: 48,
   fontWeight: 600,
   letterSpacing: "-0.01em",
-};
-
-const comingSoonStyle: React.CSSProperties = {
-  background: "rgba(120, 150, 220, 0.08)",
-  border: "1px solid rgba(120, 150, 220, 0.2)",
-  borderRadius: 12,
-  padding: "20px 22px",
-};
-
-const hintStyle: React.CSSProperties = {
-  marginTop: 12,
-  marginBottom: 0,
-  color: "#98a6c9",
-  fontSize: 14,
 };
