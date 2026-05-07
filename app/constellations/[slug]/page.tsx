@@ -9,10 +9,18 @@ import { hasLesson } from "@/lib/constellation/lessons";
 import { getLessonComponent } from "@/lib/constellation/lessonComponents";
 import { getConstellationMembers } from "@/lib/constellation/server";
 import ConstellationContent from "@/components/ConstellationContent";
+import ConstellationActions from "@/components/user/ConstellationActions";
+import MarkReadButton from "@/components/user/MarkReadButton";
+import { auth } from "@/auth";
+import { isFavorite, isRead, isViewed } from "@/lib/user-data";
 
 interface PageProps {
   params: { slug: string };
 }
+
+// Auth-aware: per-user favorite/viewed/read state must SSR per request, so
+// the page is dynamic. We still expose generateStaticParams for the slug list.
+export const dynamic = "force-dynamic";
 
 export function generateStaticParams() {
   return CONSTELLATIONS.map((c) => ({ slug: c.slug }));
@@ -35,7 +43,20 @@ export default async function ConstellationPage({ params }: PageProps) {
   if (!c) notFound();
 
   const Lesson = getLessonComponent(c.slug);
-  const members = Lesson ? null : await getConstellationMembers(c.abbr);
+  const [members, session] = await Promise.all([
+    Lesson ? null : getConstellationMembers(c.abbr),
+    auth(),
+  ]);
+
+  const userId = session?.user?.id ?? null;
+  const isAuthenticated = userId !== null;
+  const [favorited, viewed, read] = userId
+    ? await Promise.all([
+        isFavorite(userId, "constellation", c.slug),
+        isViewed(userId, c.slug),
+        Lesson ? isRead(userId, c.slug) : Promise.resolve(false),
+      ])
+    : [false, false, false];
 
   return (
     <main style={pageStyle}>
@@ -48,11 +69,26 @@ export default async function ConstellationPage({ params }: PageProps) {
         </p>
         <h1 style={titleStyle}>{c.name}</h1>
       </header>
+      <ConstellationActions
+        slug={c.slug}
+        isAuthenticated={isAuthenticated}
+        initialFavorite={favorited}
+        initialViewed={viewed}
+      />
       <ConstellationContent
         name={c.name}
         lesson={Lesson ? <Lesson /> : null}
         members={members}
       />
+      {Lesson && (
+        <div style={lessonFooterStyle}>
+          <MarkReadButton
+            slug={c.slug}
+            isAuthenticated={isAuthenticated}
+            initialRead={read}
+          />
+        </div>
+      )}
     </main>
   );
 }
@@ -92,4 +128,10 @@ const titleStyle: React.CSSProperties = {
   fontSize: 48,
   fontWeight: 600,
   letterSpacing: "-0.01em",
+};
+
+const lessonFooterStyle: React.CSSProperties = {
+  marginTop: 32,
+  paddingTop: 20,
+  borderTop: "1px solid rgba(120, 150, 220, 0.18)",
 };

@@ -9,6 +9,8 @@ import BodyCard, {
   formatRA,
   popupLinkStyle,
 } from "./popup/BodyCard";
+import FavoriteButton from "./user/FavoriteButton";
+import { actionRowStyle } from "./user/styles";
 
 export interface StarPopupProps {
   star: Star | null;
@@ -30,14 +32,23 @@ export default function StarPopup({ star, onClose }: StarPopupProps) {
       }
       onClose={onClose}
       footer={
-        constellation && (
-          <Link
-            href={`/constellations/${constellation.slug}`}
-            style={popupLinkStyle}
-          >
-            Read about {constellation.name} →
-          </Link>
-        )
+        <>
+          <div style={actionRowStyle}>
+            <FavoriteButton
+              type="star"
+              targetId={String(star.id)}
+              signInHint="to favorite this star"
+            />
+          </div>
+          {constellation && (
+            <Link
+              href={`/constellations/${constellation.slug}`}
+              style={popupLinkStyle}
+            >
+              Read about {constellation.name} →
+            </Link>
+          )}
+        </>
       }
     >
       <Field label="Magnitude">{formatMagnitude(star.mag)}</Field>
