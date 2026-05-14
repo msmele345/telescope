@@ -1,6 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+
+// Stub server actions so jsdom doesn't evaluate next-auth at import time.
+vi.mock("@/app/actions/user-data", () => ({
+  getFavoriteState: vi.fn(async () => ({ status: "unauth" })),
+  toggleFavorite: vi.fn(async () => ({ status: "unauth" })),
+  toggleViewed: vi.fn(),
+  toggleRead: vi.fn(),
+}));
+
 import StarPopup from "@/components/StarPopup";
 import type { Star } from "@/lib/star-catalog";
 
