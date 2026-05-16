@@ -30,6 +30,15 @@ describe("<SiteHeader />", () => {
     expect(
       screen.getByRole("button", { name: /sign out/i })
     ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /profile/i })).toHaveAttribute(
+      "href",
+      "/profile"
+    );
+  });
+
+  it("does not expose the profile link when signed out", () => {
+    render(<SiteHeader session={null} />);
+    expect(screen.queryByRole("link", { name: /profile/i })).toBeNull();
   });
 
   it("falls back to name when the session has no email", () => {
