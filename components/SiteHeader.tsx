@@ -17,6 +17,9 @@ export default function SiteHeader({ session }: Props) {
       <nav style={navStyle}>
         {user ? (
           <>
+            <Link href="/profile" style={linkStyle}>
+              Profile
+            </Link>
             <span style={emailStyle}>{user.email ?? user.name}</span>
             <form
               action={async () => {

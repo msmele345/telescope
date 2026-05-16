@@ -77,6 +77,36 @@ export async function listFavorites(
   return rows;
 }
 
+export async function listViewed(
+  userId: string | number
+): Promise<TimestampedRow[]> {
+  const id = uid(userId);
+  if (id === null) return [];
+  const { rows } = await pool.query<TimestampedRow>(
+    `SELECT constellation_id, viewed_at AS ts
+       FROM viewed_constellations
+      WHERE user_id = $1
+      ORDER BY viewed_at DESC`,
+    [id]
+  );
+  return rows;
+}
+
+export async function listRead(
+  userId: string | number
+): Promise<TimestampedRow[]> {
+  const id = uid(userId);
+  if (id === null) return [];
+  const { rows } = await pool.query<TimestampedRow>(
+    `SELECT constellation_id, read_at AS ts
+       FROM read_lessons
+      WHERE user_id = $1
+      ORDER BY read_at DESC`,
+    [id]
+  );
+  return rows;
+}
+
 export async function isViewed(
   userId: string | number,
   constellationId: string

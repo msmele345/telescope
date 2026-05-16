@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import LocationPrompt from "@/components/LocationPrompt";
 import TimeScrubber from "@/components/TimeScrubber";
@@ -8,7 +9,7 @@ import { TimeController, type TimeSnapshot } from "@/lib/time-controller";
 import StarPopup from "@/components/StarPopup";
 import PlanetPopup from "@/components/PlanetPopup";
 import MessierPopup from "@/components/MessierPopup";
-import type { Star } from "@/lib/star-catalog";
+import { loadCatalog, type Star } from "@/lib/star-catalog";
 import type { SolarBody } from "@/lib/solar-system";
 import type { MessierObject } from "@/lib/messier";
 import {
@@ -36,11 +37,35 @@ export default function Home() {
   const controller = useMemo(() => new TimeController(), []);
   const [when, setWhen] = useState<Date>(() => new Date(controller.getVirtualMs()));
   const [selection, setSelection] = useState<Selection | null>(null);
+  const searchParams = useSearchParams();
+  const focusStarParam = searchParams.get("star");
 
   useEffect(() => {
     const saved = loadSavedObserver();
     if (saved) setObserver(saved);
   }, []);
+
+  // Deep-link: when navigated to /?star=ID (e.g. from /profile), look up the
+  // star in the catalog and open its popup. Cancellable so a fast nav doesn't
+  // stomp on a later selection.
+  useEffect(() => {
+    if (!focusStarParam) return;
+    const targetId = Number(focusStarParam);
+    if (!Number.isFinite(targetId)) return;
+    let cancelled = false;
+    loadCatalog()
+      .then((catalog) => {
+        if (cancelled) return;
+        const star = catalog.find((s) => s.id === targetId);
+        if (star) setSelection({ kind: "star", data: star });
+      })
+      .catch(() => {
+        // Catalog load is best-effort for deep-linking; silent on failure.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [focusStarParam]);
 
   // Drive the sky's "when" from the controller. State changes (pause/play/
   // scrub/reset/speed) push immediately; while running, a RAF loop pushes
