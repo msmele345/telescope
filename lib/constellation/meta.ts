@@ -145,3 +145,31 @@ export function getConstellationBySlug(
 export function isKnownAbbr(abbr: string): boolean {
   return BY_ABBR.has(abbr);
 }
+
+/**
+ * Pure search over the 88 IAU constellations for the accessibility directory.
+ * Matches on display name, 3-letter abbreviation, and Latin genitive, ranked
+ * by match quality then alphabetically. Empty query returns no results.
+ */
+export function searchConstellations(
+  query: string,
+  limit = 20
+): ConstellationMeta[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+
+  const scored: Array<{ c: ConstellationMeta; rank: number }> = [];
+  for (const c of CONSTELLATIONS) {
+    const name = c.name.toLowerCase();
+    const abbr = c.abbr.toLowerCase();
+    const gen = c.genitive.toLowerCase();
+    let rank: number | null = null;
+    if (name === q || abbr === q) rank = 0;
+    else if (name.startsWith(q)) rank = 1;
+    else if (name.includes(q) || gen.includes(q)) rank = 2;
+    if (rank !== null) scored.push({ c, rank });
+  }
+
+  scored.sort((a, b) => a.rank - b.rank || a.c.name.localeCompare(b.c.name));
+  return scored.slice(0, limit).map((s) => s.c);
+}

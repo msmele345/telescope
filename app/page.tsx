@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import LocationPrompt from "@/components/LocationPrompt";
 import TimeScrubber from "@/components/TimeScrubber";
 import { TimeController, type TimeSnapshot } from "@/lib/time-controller";
+import SkyDirectory from "@/components/SkyDirectory";
 import StarPopup from "@/components/StarPopup";
 import PlanetPopup from "@/components/PlanetPopup";
 import MessierPopup from "@/components/MessierPopup";
@@ -130,6 +131,7 @@ export default function Home() {
         onSelectPlanet={handleSelectPlanet}
         onSelectMessier={handleSelectMessier}
       />
+      <SkyDirectory onSelectStar={handleSelectStar} />
       <LocationPrompt observer={observer} onResolve={handleResolve} />
       <TimeScrubber controller={controller} />
       {selection?.kind === "star" && (

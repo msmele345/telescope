@@ -1,8 +1,8 @@
 "use client";
 
-import { Canvas, type ThreeEvent } from "@react-three/fiber";
+import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import {
   buildHorizonStarFieldAttributes,
@@ -31,12 +31,21 @@ import {
 } from "@/lib/sky-math";
 import { DEFAULT_OBSERVER, type ObserverLocation } from "@/lib/observer";
 import Horizon from "./Horizon";
+import MilkyWay from "./MilkyWay";
 
 const SPHERE_RADIUS = 50;
 const POINT_PICK_THRESHOLD = 1.2;
 const SOLAR_RADIUS = 49;
 const MESSIER_RADIUS = 49.5;
 const DEG = Math.PI / 180;
+
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
 
 export interface SkyCanvasProps {
   observer?: ObserverLocation;
@@ -68,6 +77,7 @@ export default function SkyCanvas({
       }}
     >
       <color attach="background" args={["#000011"]} />
+      <MilkyWay observer={observer} when={when} radius={SPHERE_RADIUS} />
       <StarField observer={observer} when={when} onSelectStar={onSelectStar} />
       <ConstellationLineLayer observer={observer} when={when} />
       <MessierLayer
@@ -127,6 +137,13 @@ function StarField({ observer, when, onSelectStar }: StarFieldProps) {
     g.setAttribute("position", new THREE.BufferAttribute(attrs.positions, 3));
     g.setAttribute("size", new THREE.BufferAttribute(attrs.sizes, 1));
     g.setAttribute("brightness", new THREE.BufferAttribute(attrs.brightness, 1));
+    // Stable per-star twinkle phase so a star keeps its rhythm across
+    // recomputes; depends only on the catalog, not observer/time.
+    const phases = new Float32Array(stars.length);
+    for (let i = 0; i < stars.length; i++) {
+      phases[i] = ((Math.sin(i * 12.9898) * 43758.5453) % 1 + 1) % 1;
+    }
+    g.setAttribute("phase", new THREE.BufferAttribute(phases, 1));
     return g;
   }, [stars, observer, when]);
 
@@ -136,29 +153,48 @@ function StarField({ observer, when, onSelectStar }: StarFieldProps) {
         transparent: true,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
+        uniforms: {
+          uTime: { value: 0 },
+          uTwinkleAmp: { value: prefersReducedMotion() ? 0 : 0.35 },
+        },
         vertexShader: `
           attribute float size;
           attribute float brightness;
+          attribute float phase;
           varying float vBrightness;
+          varying float vPhase;
           void main() {
             vBrightness = brightness;
+            vPhase = phase;
             gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
             gl_PointSize = size;
           }
         `,
         fragmentShader: `
+          uniform float uTime;
+          uniform float uTwinkleAmp;
           varying float vBrightness;
+          varying float vPhase;
           void main() {
             vec2 c = gl_PointCoord - 0.5;
             float r2 = dot(c, c);
             if (r2 > 0.25) discard;
             float falloff = 1.0 - smoothstep(0.0, 0.25, r2);
-            gl_FragColor = vec4(vec3(1.0), falloff * vBrightness);
+            // Faint stars scintillate more than bright ones; phase keeps
+            // each star's flicker independent.
+            float amp = uTwinkleAmp * (1.0 - vBrightness);
+            float tw = 1.0 - amp + amp *
+              sin(uTime * 3.0 + vPhase * 6.2831853);
+            gl_FragColor = vec4(vec3(1.0), falloff * vBrightness * tw);
           }
         `,
       }),
     []
   );
+
+  useFrame((state) => {
+    material.uniforms.uTime.value = state.clock.elapsedTime;
+  });
 
   useEffect(
     () => () => {
