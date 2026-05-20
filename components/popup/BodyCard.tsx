@@ -47,6 +47,7 @@ const BodyCard = forwardRef<HTMLDivElement, BodyCardProps>(function BodyCard(
       aria-modal="false"
       aria-labelledby={titleId}
       style={cardStyle}
+      className="body-card"
     >
       <button
         type="button"

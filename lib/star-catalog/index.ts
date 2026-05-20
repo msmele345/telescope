@@ -9,3 +9,5 @@ export {
   buildHorizonStarFieldAttributes,
 } from "./geometry";
 export type { StarFieldAttributes } from "./geometry";
+export { searchStars } from "./search";
+export type { StarSearchOptions } from "./search";
