@@ -255,8 +255,8 @@ Decision points to reach during the spike:
 
 ### Acceptance criteria
 
-- [ ] Spike report covers: data availability, license, join coverage % via HD, file size impact, and a side-by-side accuracy comparison on 10 well-known stars.
-- [ ] If the spike is favorable: `distLy` is populated for >95% of bundled stars.
-- [ ] Famous-star distances match accepted modern values within ~2% (Sirius 8.6, Vega 25, Polaris 433, Betelgeuse 640).
-- [ ] No regression in bundle size beyond +500 KB gzipped on `public/data/bsc5.json`.
-- [ ] If the spike is unfavorable, document why and close the phase without shipping.
+- [x] Spike report covers: data availability, license, join coverage % via HD, file size impact, and a side-by-side accuracy comparison on 10 well-known stars. See `plans/hipparcos-spike-report.md`.
+- [x] If the spike is favorable: `distLy` is populated for >95% of bundled stars. (99.1% — 9,015 / 9,096.)
+- [x] Famous-star distances match accepted modern values within ~2% (Sirius 8.6, Vega 25, Polaris 433, Betelgeuse 640).
+- [x] No regression in bundle size beyond +500 KB gzipped on `public/data/bsc5.json`. (+22 KB gzipped.)
+- [x] If the spike is unfavorable, document why and close the phase without shipping. (Spike was favorable — shipped.)

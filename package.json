@@ -12,6 +12,7 @@
     "env:pull": "vercel env pull .env.local && cat scripts/env-aliases.sh >> .env.local",
     "data:fetch": "node scripts/fetch-bsc.mjs && node scripts/fetch-zipcodes.mjs && node scripts/fetch-constellation-lines.mjs",
     "data:fetch:bsc": "node scripts/fetch-bsc.mjs",
+    "data:fetch:hipparcos": "node scripts/fetch-hipparcos.mjs",
     "data:fetch:zips": "node scripts/fetch-zipcodes.mjs",
     "data:fetch:lines": "node scripts/fetch-constellation-lines.mjs",
     "db:migrate": "node scripts/db-migrate.mjs"
