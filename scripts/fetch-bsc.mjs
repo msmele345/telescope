@@ -2,10 +2,16 @@
 // Downloads the Yale Bright Star Catalog and writes a minimal JSON
 // (id, ra, dec, mag, name?, bayer?, constellation?, colorK?, distLy?) to
 // public/data/bsc5.json. Idempotent — safe to re-run.
+//
+// `distLy` is resolved through a fallback chain (curated → Hipparcos → BSC):
+// the Hipparcos cross-match lifts distance coverage from ~34% to ~99%.
 
 import { writeFile, mkdir } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+
+import { loadHipparcosByHD } from "./fetch-hipparcos.mjs";
+import { resolveDistanceLy } from "./lib/star-distance.mjs";
 
 // bsc5-all.json keeps fields the short variant drops — notably Parallax
 // (arcseconds) and Common (proper name).
@@ -18,7 +24,6 @@ const OUT_PATH = join(OUT_DIR, "bsc5.json");
 
 const DEG = Math.PI / 180;
 const HOUR_TO_DEG = 15;
-const PARSEC_TO_LY = 3.261563;
 
 function parseRA(raw) {
   // "00h 05m 09.9s" → radians
@@ -38,17 +43,6 @@ function parseDec(raw) {
   return (sign === "+" ? 1 : -1) * deg * DEG;
 }
 
-function parseParallaxLy(raw) {
-  // "+.014" / "-.001" / "+.375" — arcseconds, signed string. Negative or
-  // zero parallax is a measurement artifact (noise on very distant stars);
-  // treat as unknown rather than emitting nonsense distances.
-  if (raw == null) return null;
-  const arcsec = Number(raw);
-  if (!Number.isFinite(arcsec) || arcsec <= 0) return null;
-  const parsecs = 1 / arcsec;
-  return parsecs * PARSEC_TO_LY;
-}
-
 async function main() {
   console.log(`Fetching ${SOURCE} …`);
   const res = await fetch(SOURCE);
@@ -56,6 +50,11 @@ async function main() {
   const raw = await res.json();
   console.log(`  Received ${raw.length} records.`);
 
+  console.log("Loading Hipparcos parallax index …");
+  const { byHd } = await loadHipparcosByHD();
+  console.log(`  ${byHd.size} HD-keyed Hipparcos entries.`);
+
+  const sources = { curated: 0, hipparcos: 0, bsc: 0, none: 0 };
   const stars = raw.map((s) => {
     const star = {
       id: Number(s.HR),
@@ -67,8 +66,20 @@ async function main() {
     if (s.Bayer) star.bayer = s.Bayer;
     if (s.Constellation) star.constellation = s.Constellation;
     if (s.K) star.colorK = Number(s.K);
-    const distLy = parseParallaxLy(s.Parallax);
-    if (distLy !== null) star.distLy = Math.round(distLy * 10) / 10;
+
+    const hd = parseInt(String(s.HD).trim(), 10);
+    const hip = Number.isFinite(hd) ? byHd.get(hd) : undefined;
+    const dist = resolveDistanceLy({
+      hr: star.id,
+      hipPlx: hip ? hip.plx : null,
+      bscParallax: s.Parallax,
+    });
+    if (dist) {
+      star.distLy = dist.distLy;
+      sources[dist.source]++;
+    } else {
+      sources.none++;
+    }
     return star;
   });
 
@@ -77,12 +88,17 @@ async function main() {
 
   const named = stars.filter((s) => s.name).length;
   const withDist = stars.filter((s) => s.distLy !== undefined).length;
+  const coverage = ((100 * withDist) / stars.length).toFixed(1);
   const magRange = stars.reduce(
     (a, s) => ({ min: Math.min(a.min, s.mag), max: Math.max(a.max, s.mag) }),
     { min: Infinity, max: -Infinity }
   );
   console.log(`Wrote ${OUT_PATH}`);
-  console.log(`  Stars: ${stars.length} (${named} named, ${withDist} with distance)`);
+  console.log(`  Stars: ${stars.length} (${named} named, ${withDist} with distance — ${coverage}%)`);
+  console.log(
+    `  Distance source: ${sources.hipparcos} Hipparcos, ${sources.bsc} BSC, ` +
+      `${sources.curated} curated, ${sources.none} none`
+  );
   console.log(`  Magnitude range: ${magRange.min} … ${magRange.max}`);
 }
 

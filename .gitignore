@@ -29,6 +29,9 @@ yarn-error.log*
 # testing
 coverage/
 
+# build-time data caches (e.g. Hipparcos source)
+.cache/
+
 # vercel
 .vercel
 
