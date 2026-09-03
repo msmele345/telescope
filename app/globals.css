@@ -1,0 +1,111 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  background: #000;
+  color: #f5f5f5;
+  font-family:
+    system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  letter-spacing: 0.01em;
+}
+
+#__next,
+main {
+  height: 100%;
+}
+
+/* Keyboard focus is always clearly visible (the canvas alternative path
+   depends on this); pointer focus stays quiet. */
+:focus-visible {
+  outline: 2px solid #9ec0ff;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Entrance + hover micro-interactions ------------------------------------ */
+
+@keyframes telescope-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.body-card,
+.sky-directory-panel {
+  animation: telescope-pop-in 160ms ease-out;
+}
+
+.sky-directory-toggle {
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease;
+}
+
+.sky-directory-toggle:hover {
+  background: rgba(20, 26, 50, 0.92);
+  border-color: rgba(150, 180, 250, 0.55);
+  transform: translateY(-1px);
+}
+
+.sky-directory-panel [data-result] {
+  transition:
+    background 120ms ease,
+    transform 120ms ease;
+}
+
+.sky-directory-panel [data-result]:hover,
+.sky-directory-panel [data-result]:focus-visible {
+  background: rgba(120, 150, 220, 0.16);
+}
+
+/* Tablet ----------------------------------------------------------------- */
+
+@media (max-width: 1024px) {
+  body {
+    letter-spacing: 0;
+  }
+
+  /* Keep the search panel and a star popup from colliding on the narrower
+     tablet viewport: dock the search panel to the full top band. */
+  .sky-directory-panel {
+    left: 16px;
+    right: 16px;
+    width: auto;
+    max-height: 60vh;
+  }
+
+  .sky-directory-toggle {
+    top: 56px;
+  }
+}
+
+@media (max-width: 1024px) and (orientation: landscape) {
+  .sky-directory-panel {
+    max-height: 70vh;
+  }
+}
+
+/* Respect users who ask for less motion -------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .body-card,
+  .sky-directory-panel,
+  .sky-directory-toggle {
+    animation: none;
+    transition: none;
+  }
+}
