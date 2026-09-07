@@ -6,8 +6,9 @@
 - Key dirs: src/app/ (routes), src/components/
 
 # Project Overview and Plan:
-See @PRD.md to review project goals
+See @docs/PRD.md to review project goals
 See @plans/telescope-star-map.md for formal plan
+See @plans/v2-lightweight-auth.md for the auth refactor. This work is active. 
 
 # Run Commands:
 - npm run dev 
@@ -15,6 +16,10 @@ See @plans/telescope-star-map.md for formal plan
 - npm run build 
 - npm run env:pull  # use this instead of `vercel env pull` — it also appends unprefixed POSTGRES_URL/DATABASE_URL aliases from scripts/env-aliases.sh
 - npx vercel --yes # for deploying current branch to vercel preview
+
+## Cadences to follow:
+1. TDD on any new feature code or bug fixes. Use Test Driven Development whenever possible. See the /tdd skill.
+2. Red green refactor. Reference the tdd skill and follow it
 
 # Git Remote:
 https://github.com/msmele345/telescope/
