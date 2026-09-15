@@ -2,7 +2,7 @@ export type CodeAttemptResult =
   | { status: "ok" }
   | { status: "expired" }
   | { status: "wrong"; attemptsRemaining: number }
-  | { status: "locked" };
+  | { status: "locked"; countsAsAttempt: boolean };
 
 export type CodeRequestResult = "allowed" | "cooldown" | "hourlyCap";
 

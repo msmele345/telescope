@@ -44,7 +44,7 @@ export function evaluateCodeAttempt(
   now: number
 ): CodeAttemptResult {
   if (row.consumed || row.attempts >= MAX_ATTEMPTS) {
-    return { status: "locked" };
+    return { status: "locked", countsAsAttempt: false };
   }
 
   if (now >= row.expiresAt) {
@@ -54,7 +54,8 @@ export function evaluateCodeAttempt(
   if (hashToken(submitted) !== row.codeHash) {
     const attempts = row.attempts + 1;
     if (attempts >= MAX_ATTEMPTS) {
-      return { status: "locked" };
+      // The caller must persist this failure, or the next correct guess would slip past the lock.
+      return { status: "locked", countsAsAttempt: true };
     }
     return { status: "wrong", attemptsRemaining: MAX_ATTEMPTS - attempts };
   }

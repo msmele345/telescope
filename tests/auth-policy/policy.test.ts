@@ -112,32 +112,39 @@ describe("evaluateCodeAttempt", () => {
     });
   });
 
-  it("locks on the fifth consecutive wrong attempt", () => {
+  it("locks on the fifth consecutive wrong attempt and counts that attempt", () => {
     expect(evaluateCodeAttempt(codeRow({ attempts: 4 }), "999999", T0)).toEqual({
       status: "locked",
+      countsAsAttempt: true,
     });
   });
 
-  it("rejects a correct submission of a locked code", () => {
+  it("rejects a correct submission of a locked code without counting it", () => {
     expect(evaluateCodeAttempt(codeRow({ attempts: MAX_ATTEMPTS }), "123456", T0)).toEqual(
-      { status: "locked" }
+      { status: "locked", countsAsAttempt: false }
     );
   });
 
-  it("rejects a consumed code", () => {
+  it("rejects a consumed code without counting it", () => {
     expect(evaluateCodeAttempt(codeRow({ consumed: true }), "123456", T0)).toEqual({
       status: "locked",
+      countsAsAttempt: false,
     });
   });
 
-  it("invalidates the previous code when a new one is requested", () => {
-    const earlier = codeRow({ codeHash: hashToken("111111"), consumed: true });
-    const later = codeRow({ codeHash: hashToken("222222"), createdAt: T0 + 1_000 });
+  it("still rejects the correct code after five wrong guesses fed through in sequence", () => {
+    let row = codeRow();
+    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+      const result = evaluateCodeAttempt(row, "999999", T0);
+      const counts =
+        result.status === "wrong" || (result.status === "locked" && result.countsAsAttempt);
+      if (counts) row = { ...row, attempts: row.attempts + 1 };
+    }
 
-    expect(evaluateCodeAttempt(earlier, "111111", T0 + 2_000)).toEqual({
+    expect(evaluateCodeAttempt(row, "123456", T0)).toEqual({
       status: "locked",
+      countsAsAttempt: false,
     });
-    expect(evaluateCodeAttempt(later, "222222", T0 + 2_000)).toEqual({ status: "ok" });
   });
 });
 
