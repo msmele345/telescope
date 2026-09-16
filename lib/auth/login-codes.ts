@@ -2,7 +2,9 @@ import { pool } from "@/lib/db";
 import {
   CODE_REQUEST_WINDOW_MS,
   CODE_TTL_MS,
+  canRequestCode,
   hashToken,
+  type CodeRequestResult,
   type LoginCodeRow,
   type RequestHistoryRow,
 } from "@/lib/auth-policy";
@@ -21,38 +23,49 @@ interface Row {
 }
 
 /**
- * Every request logged for this address inside the rate-limit window —
- * including spent and expired ones, which is what gives the hourly cap an
- * hour of history to count rather than the ten minutes a code stays live.
- */
-export async function listRecentRequests(
-  email: string,
-  now: number
-): Promise<RequestHistoryRow[]> {
-  const { rows } = await pool.query<{ created_at: Date }>(
-    `SELECT created_at FROM login_codes
-      WHERE email = $1 AND created_at > $2`,
-    [email, new Date(now - CODE_REQUEST_WINDOW_MS)]
-  );
-  return rows.map((row) => ({ createdAt: row.created_at.getTime() }));
-}
-
-/**
- * Store a freshly issued code. Latest wins: any prior unspent code for this
- * address is marked consumed in the same breath, so only the most recent code
- * can ever verify — and the retired row stays behind as rate-limit history.
+ * Issue a code for an address, if the rate limits allow it.
  *
- * Cleanup rides along here rather than on a schedule; the table holds a
- * handful of rows, and only rows older than the rate-limit window are dropped.
+ * The limits are checked and the row inserted inside one transaction, under
+ * an advisory lock on the address. Doing the check as a separate round-trip
+ * would let concurrent requests all read the same history and all pass it —
+ * and since the limits are per-address and there is no per-IP throttling,
+ * this is the only thing standing between a script and someone's inbox.
+ *
+ * Latest wins: any prior unspent code for the address is marked consumed in
+ * the same breath, so only the most recent code can ever verify — the
+ * retired row stays behind as rate-limit history. Cleanup rides along here
+ * rather than on a schedule, and drops only rows past the window.
+ *
+ * Returns the verdict and the history it was judged against, so the caller
+ * can say how long the wait is without re-reading.
  */
-export async function createLoginCode(
+export async function issueLoginCode(
   email: string,
   code: string,
   now: number
-): Promise<void> {
+): Promise<{ verdict: CodeRequestResult; recent: RequestHistoryRow[] }> {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext($1)::bigint)`, [
+      email,
+    ]);
+
+    const { rows } = await client.query<{ created_at: Date }>(
+      `SELECT created_at FROM login_codes
+        WHERE email = $1 AND created_at > $2`,
+      [email, new Date(now - CODE_REQUEST_WINDOW_MS)]
+    );
+    const recent: RequestHistoryRow[] = rows.map((row) => ({
+      createdAt: row.created_at.getTime(),
+    }));
+
+    const verdict = canRequestCode(recent, now);
+    if (verdict !== "allowed") {
+      await client.query("ROLLBACK");
+      return { verdict, recent };
+    }
+
     await client.query(`DELETE FROM login_codes WHERE created_at <= $1`, [
       new Date(now - CODE_REQUEST_WINDOW_MS),
     ]);
@@ -67,6 +80,7 @@ export async function createLoginCode(
       [email, hashToken(code), new Date(now + CODE_TTL_MS), new Date(now)]
     );
     await client.query("COMMIT");
+    return { verdict, recent };
   } catch (err) {
     await client.query("ROLLBACK");
     throw err;

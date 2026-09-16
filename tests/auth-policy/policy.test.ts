@@ -4,6 +4,7 @@ import {
   evaluateCodeAttempt,
   evaluateSession,
   generateCode,
+  generateSessionToken,
   hashToken,
   isValidEmail,
   normalizeEmail,
@@ -283,5 +284,24 @@ describe("isValidEmail", () => {
     expect(isValidEmail("ada@example")).toBe(false);
     expect(isValidEmail("ada lovelace@example.com")).toBe(false);
     expect(isValidEmail("")).toBe(false);
+  });
+});
+
+describe("generateSessionToken", () => {
+  it("produces 64 hex characters — an opaque 256-bit value", () => {
+    for (let i = 0; i < 200; i++) {
+      expect(generateSessionToken()).toMatch(/^[0-9a-f]{64}$/);
+    }
+  });
+
+  it("does not repeat", () => {
+    const seen = new Set(Array.from({ length: 500 }, generateSessionToken));
+    expect(seen.size).toBe(500);
+  });
+
+  it("is not stored as issued — only its hash is", () => {
+    const token = generateSessionToken();
+    expect(hashToken(token)).not.toBe(token);
+    expect(hashToken(token)).toMatch(/^[0-9a-f]{64}$/);
   });
 });

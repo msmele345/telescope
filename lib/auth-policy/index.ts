@@ -11,6 +11,7 @@ export {
   evaluateCodeAttempt,
   evaluateSession,
   generateCode,
+  generateSessionToken,
   hashToken,
   isValidEmail,
   normalizeEmail,
@@ -22,5 +23,6 @@ export {
   CODE_TTL_MS,
   MAX_ATTEMPTS,
   SESSION_REFRESH_THRESHOLD_MS,
+  SESSION_TOKEN_BYTES,
   SESSION_TTL_MS,
 } from "./policy";

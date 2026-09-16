@@ -34,6 +34,18 @@ export function generateCode(): string {
   return String(value % CODE_SPACE).padStart(CODE_LENGTH, "0");
 }
 
+export const SESSION_TOKEN_BYTES = 32;
+
+/**
+ * An opaque 256-bit session token. It carries no claims, so there is no
+ * signing secret to configure or rotate — only the value is ever looked up.
+ */
+export function generateSessionToken(): string {
+  const bytes = new Uint8Array(SESSION_TOKEN_BYTES);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 export function hashToken(raw: string): string {
   return createHash("sha256").update(raw, "utf8").digest("hex");
 }
@@ -71,13 +83,20 @@ export function evaluateSession(row: SessionRow, now: number): SessionEvaluation
   return { valid: true, shouldSlide: remaining < SESSION_REFRESH_THRESHOLD_MS };
 }
 
+function withinRateLimitWindow(
+  recentRows: RequestHistoryRow[],
+  now: number
+): RequestHistoryRow[] {
+  return recentRows.filter(
+    (row) => now - row.createdAt < CODE_REQUEST_WINDOW_MS
+  );
+}
+
 export function canRequestCode(
   recentRows: RequestHistoryRow[],
   now: number
 ): CodeRequestResult {
-  const withinWindow = recentRows.filter(
-    (row) => now - row.createdAt < CODE_REQUEST_WINDOW_MS
-  );
+  const withinWindow = withinRateLimitWindow(recentRows, now);
 
   if (withinWindow.some((row) => now - row.createdAt < CODE_REQUEST_COOLDOWN_MS)) {
     return "cooldown";
@@ -98,9 +117,7 @@ export function canRequestCode(
  * only once the oldest request in the window falls out of it.
  */
 export function retryAfterMs(recentRows: RequestHistoryRow[], now: number): number {
-  const withinWindow = recentRows.filter(
-    (row) => now - row.createdAt < CODE_REQUEST_WINDOW_MS
-  );
+  const withinWindow = withinRateLimitWindow(recentRows, now);
   if (withinWindow.length === 0) return 0;
 
   const newest = Math.max(...withinWindow.map((row) => row.createdAt));

@@ -38,17 +38,16 @@ export const auth = cache(async function auth(): Promise<Session | null> {
   const tokenHash = hashToken(raw);
   const record = await findSession(tokenHash);
   if (!record) {
-    // Signed out elsewhere, or the row expired away: drop the dead cookie so
-    // the visitor lands back at sign-in rather than on an error.
+    // Signed out elsewhere, or the row aged away. Try to drop the dead
+    // cookie — that only lands if we are in an action, so a read-only
+    // visitor keeps a useless cookie until their next one. Either way they
+    // are treated as signed out rather than shown an error.
     clearSessionToken();
     return null;
   }
 
   const now = Date.now();
-  const { valid, shouldSlide } = evaluateSession(
-    { tokenHash: record.tokenHash, userId: record.userId, expiresAt: record.expiresAt },
-    now
-  );
+  const { valid, shouldSlide } = evaluateSession(record, now);
 
   if (!valid) {
     await deleteSession(tokenHash);

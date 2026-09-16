@@ -82,6 +82,8 @@ export default function LoginForm() {
         e.preventDefault();
         startTransition(async () => {
           const result = await verifyCode(email, code);
+          // Nothing comes back on success — the action redirected us away.
+          if (!result) return;
           setNotice(null);
           if (result.status === "wrong") {
             setError(

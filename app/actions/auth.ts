@@ -2,20 +2,19 @@
 
 import { redirect } from "next/navigation";
 import {
-  canRequestCode,
   evaluateCodeAttempt,
   generateCode,
+  generateSessionToken,
   isValidEmail,
   normalizeEmail,
   retryAfterMs,
 } from "@/lib/auth-policy";
 import {
   consumeLoginCode,
-  createLoginCode,
   createSession,
   deliverCode,
   getLatestLoginCode,
-  listRecentRequests,
+  issueLoginCode,
   recordFailedAttempt,
   upsertUserByEmail,
   writeSessionToken,
@@ -27,8 +26,11 @@ export type RequestCodeResult =
   | { status: "invalidEmail" }
   | { status: "rateLimited"; retryAfterSeconds: number };
 
+/**
+ * Only the ways verification can fail. A success never reaches the caller:
+ * the action redirects, so the client's promise resolves with `undefined`.
+ */
 export type VerifyCodeResult =
-  | { status: "ok" }
   | { status: "invalidEmail" }
   | { status: "wrong"; attemptsRemaining: number }
   | { status: "expired" }
@@ -46,16 +48,15 @@ export async function requestCode(email: string): Promise<RequestCodeResult> {
   if (!isValidEmail(normalized)) return { status: "invalidEmail" };
 
   const now = Date.now();
-  const recent = await listRecentRequests(normalized, now);
-  if (canRequestCode(recent, now) !== "allowed") {
+  const code = generateCode();
+  const { verdict, recent } = await issueLoginCode(normalized, code, now);
+  if (verdict !== "allowed") {
     return {
       status: "rateLimited",
       retryAfterSeconds: Math.max(1, Math.ceil(retryAfterMs(recent, now) / 1000)),
     };
   }
 
-  const code = generateCode();
-  await createLoginCode(normalized, code, now);
   await deliverCode(normalized, code);
 
   return { status: "sent", email: normalized };
@@ -70,7 +71,7 @@ export async function requestCode(email: string): Promise<RequestCodeResult> {
 export async function verifyCode(
   email: string,
   code: string
-): Promise<VerifyCodeResult> {
+): Promise<VerifyCodeResult | void> {
   const normalized = normalizeEmail(email);
   if (!isValidEmail(normalized)) return { status: "invalidEmail" };
 
@@ -96,16 +97,9 @@ export async function verifyCode(
 
   await consumeLoginCode(row.id);
   const userId = await upsertUserByEmail(normalized);
-  const token = newSessionToken();
+  const token = generateSessionToken();
   await createSession(userId, token, now);
   writeSessionToken(token);
 
   redirect("/");
-}
-
-/** An opaque 256-bit value: it carries no claims, so there is nothing to sign. */
-function newSessionToken(): string {
-  const bytes = new Uint8Array(32);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }

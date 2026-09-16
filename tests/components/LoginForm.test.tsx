@@ -45,7 +45,7 @@ describe("<LoginForm />", () => {
 
   it("names the normalised address, not the raw keystrokes", async () => {
     const user = userEvent.setup();
-    verifyCode.mockResolvedValue({ status: "ok" });
+    verifyCode.mockResolvedValue(undefined);
     render(<LoginForm />);
 
     const codeInput = await advanceToCodeEntry(user, "  Ada@Example.COM  ");
@@ -62,7 +62,7 @@ describe("<LoginForm />", () => {
 
   it("submits the entered code to verifyCode", async () => {
     const user = userEvent.setup();
-    verifyCode.mockResolvedValue({ status: "ok" });
+    verifyCode.mockResolvedValue(undefined);
     render(<LoginForm />);
 
     const codeInput = await advanceToCodeEntry(user);
@@ -74,7 +74,7 @@ describe("<LoginForm />", () => {
 
   it("accepts a pasted code, preserving a leading zero", async () => {
     const user = userEvent.setup();
-    verifyCode.mockResolvedValue({ status: "ok" });
+    verifyCode.mockResolvedValue(undefined);
     render(<LoginForm />);
 
     const codeInput = await advanceToCodeEntry(user);
@@ -83,6 +83,26 @@ describe("<LoginForm />", () => {
     await user.click(screen.getByRole("button", { name: /^sign in$/i }));
 
     expect(verifyCode).toHaveBeenCalledWith("ada@example.com", "012345");
+  });
+
+  it("survives a successful verify, which redirects instead of returning", async () => {
+    const user = userEvent.setup();
+    // On success `verifyCode` redirects, so the promise resolves with
+    // undefined rather than a result object.
+    verifyCode.mockResolvedValue(undefined);
+    const onError = vi.fn();
+    window.addEventListener("error", onError);
+    window.addEventListener("unhandledrejection", onError);
+    render(<LoginForm />);
+
+    const codeInput = await advanceToCodeEntry(user);
+    await user.type(codeInput, "123456");
+    await user.click(screen.getByRole("button", { name: /^sign in$/i }));
+
+    expect(onError).not.toHaveBeenCalled();
+    expect(screen.queryByRole("alert")).toBeNull();
+    window.removeEventListener("error", onError);
+    window.removeEventListener("unhandledrejection", onError);
   });
 
   it("rejects an email the server will not accept", async () => {
@@ -199,7 +219,7 @@ describe("<LoginForm />", () => {
       status: "sent",
       email: "ada@example.com",
     });
-    verifyCode.mockResolvedValue({ status: "ok" });
+    verifyCode.mockResolvedValue(undefined);
     render(<LoginForm />);
 
     await user.tab();

@@ -2,9 +2,8 @@ export { SESSION_COOKIE, readSessionToken, writeSessionToken, clearSessionToken 
 export { deliverCode } from "./delivery";
 export {
   consumeLoginCode,
-  createLoginCode,
   getLatestLoginCode,
-  listRecentRequests,
+  issueLoginCode,
   recordFailedAttempt,
   type StoredLoginCode,
 } from "./login-codes";

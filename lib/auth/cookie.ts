@@ -46,7 +46,17 @@ export function clearSessionToken(): void {
 function withCookieWrite(write: () => void): void {
   try {
     write();
-  } catch {
-    // Called from a Server Component; the database row is the source of truth.
+  } catch (err) {
+    // Only the Server Component restriction is expected here. Swallowing
+    // anything else would hide a genuinely failed write — in `verifyCode`
+    // that would strand a session row and silently sign nobody in.
+    if (!isServerComponentCookieError(err)) throw err;
   }
+}
+
+function isServerComponentCookieError(err: unknown): boolean {
+  return (
+    err instanceof Error &&
+    /can only be modified in a Server Action or Route Handler/i.test(err.message)
+  );
 }
