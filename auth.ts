@@ -36,3 +36,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
 });
+
+/**
+ * Re-exported so application code has a single place to import the session
+ * shape from. The auth implementation is being replaced; consumers should not
+ * depend on the identity of the module that defines this type.
+ */
+export type { Session } from "next-auth";
