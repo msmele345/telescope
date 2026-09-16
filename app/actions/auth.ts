@@ -22,7 +22,8 @@ import {
 } from "@/lib/auth";
 
 export type RequestCodeResult =
-  | { status: "sent" }
+  /** `email` is the normalised address the code was actually sent to. */
+  | { status: "sent"; email: string }
   | { status: "invalidEmail" }
   | { status: "rateLimited"; retryAfterSeconds: number };
 
@@ -57,7 +58,7 @@ export async function requestCode(email: string): Promise<RequestCodeResult> {
   await createLoginCode(normalized, code, now);
   await deliverCode(normalized, code);
 
-  return { status: "sent" };
+  return { status: "sent", email: normalized };
 }
 
 /**

@@ -17,7 +17,10 @@ async function advanceToCodeEntry(
   user: ReturnType<typeof userEvent.setup>,
   email = "ada@example.com"
 ) {
-  requestCode.mockResolvedValue({ status: "sent" });
+  requestCode.mockResolvedValue({
+    status: "sent",
+    email: email.trim().toLowerCase(),
+  });
   await user.type(screen.getByLabelText(/email address/i), email);
   await user.click(screen.getByRole("button", { name: /email me a code/i }));
   return screen.findByLabelText(/six-digit code/i);
@@ -38,6 +41,23 @@ describe("<LoginForm />", () => {
     expect(requestCode).toHaveBeenCalledWith("ada@example.com");
     expect(screen.getByText(/ada@example\.com/)).toBeInTheDocument();
     expect(screen.queryByLabelText(/email address/i)).toBeNull();
+  });
+
+  it("names the normalised address, not the raw keystrokes", async () => {
+    const user = userEvent.setup();
+    verifyCode.mockResolvedValue({ status: "ok" });
+    render(<LoginForm />);
+
+    const codeInput = await advanceToCodeEntry(user, "  Ada@Example.COM  ");
+
+    // The code went to the normalised address; saying otherwise would send
+    // the visitor hunting through the wrong inbox.
+    expect(screen.getByText(/ada@example\.com/)).toBeInTheDocument();
+    expect(screen.queryByText(/Ada@Example\.COM/)).toBeNull();
+
+    await user.type(codeInput, "123456");
+    await user.click(screen.getByRole("button", { name: /^sign in$/i }));
+    expect(verifyCode).toHaveBeenCalledWith("ada@example.com", "123456");
   });
 
   it("submits the entered code to verifyCode", async () => {
@@ -175,7 +195,10 @@ describe("<LoginForm />", () => {
 
   it("is operable by keyboard alone", async () => {
     const user = userEvent.setup();
-    requestCode.mockResolvedValue({ status: "sent" });
+    requestCode.mockResolvedValue({
+      status: "sent",
+      email: "ada@example.com",
+    });
     verifyCode.mockResolvedValue({ status: "ok" });
     render(<LoginForm />);
 

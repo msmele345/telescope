@@ -30,6 +30,8 @@ export default function LoginForm() {
       }
       setError(null);
       setCode("");
+      // Display and verify against the address the code actually went to.
+      setEmail(result.email);
       setNotice(resent ? "A new code is on its way." : null);
       setStep("code");
     });
