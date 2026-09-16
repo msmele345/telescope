@@ -89,3 +89,43 @@ export function canRequestCode(
 
   return "allowed";
 }
+
+/**
+ * How long the caller must wait before `canRequestCode` would return
+ * "allowed" for this address. Zero when a request is allowed right now.
+ *
+ * The cooldown is measured from the newest request; the hourly cap clears
+ * only once the oldest request in the window falls out of it.
+ */
+export function retryAfterMs(recentRows: RequestHistoryRow[], now: number): number {
+  const withinWindow = recentRows.filter(
+    (row) => now - row.createdAt < CODE_REQUEST_WINDOW_MS
+  );
+  if (withinWindow.length === 0) return 0;
+
+  const newest = Math.max(...withinWindow.map((row) => row.createdAt));
+  const cooldownRemaining = newest + CODE_REQUEST_COOLDOWN_MS - now;
+  if (cooldownRemaining > 0) return cooldownRemaining;
+
+  if (withinWindow.length >= CODE_REQUEST_HOURLY_CAP) {
+    const oldest = Math.min(...withinWindow.map((row) => row.createdAt));
+    return oldest + CODE_REQUEST_WINDOW_MS - now;
+  }
+
+  return 0;
+}
+
+/**
+ * Casing and stray whitespace must not fork an account, so every lookup —
+ * rate limiting, verification, and the implicit account creation — runs
+ * against the normalised form.
+ */
+export function normalizeEmail(raw: string): string {
+  return raw.trim().toLowerCase();
+}
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
+
+export function isValidEmail(normalized: string): boolean {
+  return EMAIL_PATTERN.test(normalized);
+}
