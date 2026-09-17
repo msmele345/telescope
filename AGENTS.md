@@ -2,7 +2,7 @@
 - Project Name: Telescope
 - Runtime: Node.js 22, npm 10.9.4
 - Framework: Next.js 14.2
-- DB: PostgreSQL vercel
+- DB: Postgres on Neon (via the Vercel Marketplace integration)
 - Key dirs: src/app/ (routes), src/components/
 
 # Project Overview and Plan:
@@ -14,8 +14,29 @@ See @plans/v2-lightweight-auth.md for the auth refactor. This work is active.
 - npm run dev 
 - npm test 
 - npm run build 
-- npm run env:pull  # use this instead of `vercel env pull` — it also appends unprefixed POSTGRES_URL/DATABASE_URL aliases from scripts/env-aliases.sh
+- npm run env:pull  # pulls the Development env into .env.local, then appends scripts/env-aliases.sh
+  # NOTE: that file is currently comments only — it appends no aliases. This command
+  # does NOT give you a database connection string (see "Local database" below).
+  # A pull keeps any local var the target environment doesn't define, but silently
+  # leaves it stale, and it strips comments from .env.local.
 - npx vercel --yes # for deploying current branch to vercel preview
+
+# Local database
+The Neon integration's vars are marked **Sensitive** (write-only) and are attached only to
+Preview and Production, so `npm run env:pull` can never supply them. Set the connection
+string by hand, once, in `.env.local`:
+
+- In the Neon dashboard, open the **`dev` branch** (not the production branch) and copy its
+  **direct / non-pooled** connection string — the host without `-pooler` in it.
+- Put it in `.env.local` as `POSTGRES_URL_NON_POOLING`. Keep it local; do not add it to Vercel.
+- `lib/db.ts` and `scripts/db-migrate.mjs` both read
+  `POSTGRES_URL_NON_POOLING → POSTGRES_URL → DATABASE_URL`, so this one var drives both the
+  app and the migration runner. Setting no prefix is deliberate — a prefixed var would be
+  ignored and leave you silently pointed at whatever was there before.
+
+`npm run db:migrate` prints the host it is about to touch as its first line. Read it. It also
+refuses to run against a database that holds another application's tables; override only with
+`npm run db:migrate -- --shared-db` when that co-tenancy is known and intended.
 
 ## Cadences to follow:
 1. TDD on any new feature code or bug fixes. Use Test Driven Development whenever possible. See the /tdd skill.
