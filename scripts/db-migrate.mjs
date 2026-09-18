@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
 import dotenvExpand from "dotenv-expand";
 import pg from "pg";
+import { assessTenancy, tablesCreatedByMigrations } from "./lib/db-guardrail.mjs";
 
 const envFile = process.env.DOTENV_FILE || ".env.local";
 dotenvExpand.expand(dotenv.config({ path: envFile }));
@@ -25,7 +26,10 @@ const connectionString =
 
 if (!connectionString) {
   console.error(
-    "No Postgres connection string found. Run `npm run env:pull` first."
+    "No Postgres connection string found. Set POSTGRES_URL_NON_POOLING in .env.local\n" +
+      "to the Neon `dev` branch's direct (non-pooled) connection string.\n" +
+      "`npm run env:pull` will not supply it \u2014 the Neon vars are Sensitive and are\n" +
+      "attached only to Preview and Production. See AGENTS.md \u203a Local database."
   );
   process.exit(1);
 }
@@ -44,17 +48,25 @@ const client = new pg.Client({
 });
 await client.connect();
 
+// Say out loud where this is pointed. Local dev, Preview and Production are
+// separate Neon branches, and this runner migrates whichever one .env.local
+// names — so "which database am I about to migrate" is never rhetorical.
+const target = new URL(cleanedConnectionString);
+console.log(`→ target ${target.host}${target.pathname}`);
+
 try {
+  const files = (await readdir(migrationsDir))
+    .filter((f) => f.endsWith(".sql"))
+    .sort();
+
+  await assertNotCoTenanted(client, files);
+
   await client.query(
     `CREATE TABLE IF NOT EXISTS _migrations (
        name        TEXT PRIMARY KEY,
        applied_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
      )`
   );
-
-  const files = (await readdir(migrationsDir))
-    .filter((f) => f.endsWith(".sql"))
-    .sort();
 
   const { rows } = await client.query("SELECT name FROM _migrations");
   const applied = new Set(rows.map((r) => r.name));
@@ -80,4 +92,70 @@ try {
   console.log("✓ migrations up to date");
 } finally {
   await client.end();
+}
+
+/**
+ * Refuse to migrate a database that another application also lives in.
+ *
+ * Migrations here drop and recreate generically named tables (`sessions`,
+ * `accounts`, `users`). Run against a co-tenanted database, one of those
+ * DROPs destroys somebody else's data — and because this runner is pointed
+ * at production by default, there is no rehearsal step to catch it.
+ *
+ * Override with `npm run db:migrate -- --shared-db` when the co-tenancy is
+ * known and intended.
+ */
+async function assertNotCoTenanted(client, files) {
+  const sqlTexts = await Promise.all(
+    files.map((f) => readFile(path.join(migrationsDir, f), "utf8"))
+  );
+
+  const { rows: publicRows } = await client.query(
+    `SELECT tablename FROM pg_tables WHERE schemaname = 'public'`
+  );
+  const { rows: allRows } = await client.query(
+    `SELECT schemaname, tablename FROM pg_tables
+      WHERE schemaname NOT IN ('pg_catalog', 'information_schema')`
+  );
+
+  const { shared, foreignTables, foreignJournals } = assessTenancy({
+    ownTables: tablesCreatedByMigrations(sqlTexts),
+    publicTables: publicRows.map((r) => r.tablename),
+    allTables: allRows.map((r) => ({
+      schema: r.schemaname,
+      table: r.tablename,
+    })),
+  });
+
+  if (!shared) return;
+
+  const allowed =
+    process.argv.includes("--shared-db") ||
+    process.env.TELESCOPE_ALLOW_SHARED_DB === "1";
+
+  console.error("\n⚠ This database is shared with something else.");
+  if (foreignJournals.length) {
+    console.error(
+      `  Another migration tool manages it: ${foreignJournals.join(", ")}`
+    );
+  }
+  if (foreignTables.length) {
+    const shown = foreignTables.slice(0, 12).join(", ");
+    const more =
+      foreignTables.length > 12 ? ` (+${foreignTables.length - 12} more)` : "";
+    console.error(`  Tables no migration here creates: ${shown}${more}`);
+  }
+
+  if (allowed) {
+    console.error("  Proceeding anyway — --shared-db was passed.\n");
+    return;
+  }
+
+  console.error(
+    "\n  Refusing to run. These migrations DROP generically named tables,\n" +
+      "  and this runner writes straight to production.\n" +
+      "  If this is expected: npm run db:migrate -- --shared-db\n"
+  );
+  await client.end();
+  process.exit(1);
 }

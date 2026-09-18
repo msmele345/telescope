@@ -11,7 +11,11 @@ export {
   evaluateCodeAttempt,
   evaluateSession,
   generateCode,
+  generateSessionToken,
   hashToken,
+  isValidEmail,
+  normalizeEmail,
+  retryAfterMs,
   CODE_LENGTH,
   CODE_REQUEST_COOLDOWN_MS,
   CODE_REQUEST_HOURLY_CAP,
@@ -19,5 +23,6 @@ export {
   CODE_TTL_MS,
   MAX_ATTEMPTS,
   SESSION_REFRESH_THRESHOLD_MS,
+  SESSION_TOKEN_BYTES,
   SESSION_TTL_MS,
 } from "./policy";

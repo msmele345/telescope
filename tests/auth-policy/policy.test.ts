@@ -4,7 +4,11 @@ import {
   evaluateCodeAttempt,
   evaluateSession,
   generateCode,
+  generateSessionToken,
   hashToken,
+  isValidEmail,
+  normalizeEmail,
+  retryAfterMs,
   CODE_LENGTH,
   CODE_REQUEST_COOLDOWN_MS,
   CODE_REQUEST_HOURLY_CAP,
@@ -225,5 +229,79 @@ describe("canRequestCode", () => {
       expiresAt: T0 - 5 * MINUTE,
     }));
     expect(canRequestCode(rows, T0)).toBe("hourlyCap");
+  });
+});
+describe("retryAfterMs", () => {
+  it("is zero when a request is allowed", () => {
+    expect(retryAfterMs([], T0)).toBe(0);
+    expect(retryAfterMs([historyRow(T0 - CODE_REQUEST_COOLDOWN_MS)], T0)).toBe(0);
+  });
+
+  it("counts down the remaining cooldown after the most recent request", () => {
+    expect(retryAfterMs([historyRow(T0 - 20_000)], T0)).toBe(
+      CODE_REQUEST_COOLDOWN_MS - 20_000
+    );
+  });
+
+  it("measures the cooldown from the newest row, not the oldest", () => {
+    const rows = [historyRow(T0 - 40 * MINUTE), historyRow(T0 - 10_000)];
+    expect(retryAfterMs(rows, T0)).toBe(CODE_REQUEST_COOLDOWN_MS - 10_000);
+  });
+
+  it("waits for the oldest row to leave the window when capped for the hour", () => {
+    // Five requests, the oldest 50 minutes ago and none inside the cooldown.
+    const rows = [
+      historyRow(T0 - 50 * MINUTE),
+      historyRow(T0 - 40 * MINUTE),
+      historyRow(T0 - 30 * MINUTE),
+      historyRow(T0 - 20 * MINUTE),
+      historyRow(T0 - 10 * MINUTE),
+    ];
+    expect(canRequestCode(rows, T0)).toBe("hourlyCap");
+    expect(retryAfterMs(rows, T0)).toBe(CODE_REQUEST_WINDOW_MS - 50 * MINUTE);
+  });
+});
+
+describe("normalizeEmail", () => {
+  it("ignores casing and surrounding whitespace", () => {
+    expect(normalizeEmail("  Ada@Example.com ")).toBe("ada@example.com");
+  });
+
+  it("leaves an already-normalised address alone", () => {
+    expect(normalizeEmail("ada@example.com")).toBe("ada@example.com");
+  });
+});
+
+describe("isValidEmail", () => {
+  it("accepts an ordinary address", () => {
+    expect(isValidEmail("ada@example.com")).toBe(true);
+    expect(isValidEmail("ada.lovelace+stars@sub.example.co.uk")).toBe(true);
+  });
+
+  it("rejects addresses with no domain, no local part, or whitespace", () => {
+    expect(isValidEmail("ada@")).toBe(false);
+    expect(isValidEmail("@example.com")).toBe(false);
+    expect(isValidEmail("ada@example")).toBe(false);
+    expect(isValidEmail("ada lovelace@example.com")).toBe(false);
+    expect(isValidEmail("")).toBe(false);
+  });
+});
+
+describe("generateSessionToken", () => {
+  it("produces 64 hex characters — an opaque 256-bit value", () => {
+    for (let i = 0; i < 200; i++) {
+      expect(generateSessionToken()).toMatch(/^[0-9a-f]{64}$/);
+    }
+  });
+
+  it("does not repeat", () => {
+    const seen = new Set(Array.from({ length: 500 }, generateSessionToken));
+    expect(seen.size).toBe(500);
+  });
+
+  it("is not stored as issued — only its hash is", () => {
+    const token = generateSessionToken();
+    expect(hashToken(token)).not.toBe(token);
+    expect(hashToken(token)).toMatch(/^[0-9a-f]{64}$/);
   });
 });

@@ -2,11 +2,12 @@
 - Project Name: Telescope
 - Runtime: Node.js 22, npm 10.9.4
 - Framework: Next.js 14.2
-- DB: PostgreSQL vercel
+- DB: Postgres on Neon (via the Vercel Marketplace integration)
 - Key dirs: src/app/ (routes), src/components/
 
 # Project Overview and Plan:
-See @docs/PRD.md to review project goals
+See @docs/PRD.md to review project goals — note its auth section (NextAuth, Google
+OAuth, magic links) is **superseded** by the v2 plan below and no longer describes the code.
 See @plans/telescope-star-map.md for formal plan
 See @plans/v2-lightweight-auth.md for the auth refactor. This work is active. 
 
@@ -14,8 +15,41 @@ See @plans/v2-lightweight-auth.md for the auth refactor. This work is active.
 - npm run dev 
 - npm test 
 - npm run build 
-- npm run env:pull  # use this instead of `vercel env pull` — it also appends unprefixed POSTGRES_URL/DATABASE_URL aliases from scripts/env-aliases.sh
+- npm run env:pull  # pulls the Development env into .env.local, then appends scripts/env-aliases.sh
+  # It does NOT supply a database connection string — see "Local database" below.
+  # A pull keeps any local var the Development env doesn't define, but keeps it
+  # silently, and it strips comments. env-aliases.sh re-appends the local-setup
+  # notes afterwards, which is the only reason they survive a pull.
 - npx vercel --yes # for deploying current branch to vercel preview
+
+# Local database
+
+> "Branch" is overloaded here. **Neon branches** (`production`, `dev`) are copy-on-write
+> database copies. **Git branches** (`main`, `develop`, `feat/*`) are source control. They are
+> unrelated: every git branch you work on locally talks to the Neon `dev` branch.
+
+The Neon integration's vars are marked **Sensitive** (write-only) and are attached only to the
+Preview and Production Vercel environments, so `npm run env:pull` can never supply them. Set the
+connection string by hand, once:
+
+1. Neon Console → your project → **Connect** (the connection-string widget on the dashboard).
+2. Set **Branch** to `dev`, **Database** to `neondb`, **Role** to `neondb_owner`.
+3. Turn **connection pooling off** — you want the direct string. Sanity check: the host must
+   *not* contain `-pooler`, and must differ from the production branch's host.
+4. Paste it into `.env.local` as `POSTGRES_URL_NON_POOLING`. Keep it local — do not add it to
+   Vercel, and do not commit it.
+
+`lib/db.ts` and `scripts/db-migrate.mjs` both read
+`POSTGRES_URL_NON_POOLING → POSTGRES_URL → DATABASE_URL`, so this one var drives both the app
+and the migration runner. Use these exact unprefixed names: if you connect an integration with a
+Custom Prefix, nothing reads the prefixed var and you stay silently pointed at whatever was
+configured before.
+
+Verify with `npm run db:migrate`. It prints the host it is about to touch as its first line —
+read it, and confirm it is the `dev` host. Since `dev` was branched from a migrated database it
+should report every migration as already applied. The runner also refuses to touch a database
+holding another application's tables; override with `npm run db:migrate -- --shared-db` only when
+that co-tenancy is known and intended.
 
 ## Cadences to follow:
 1. TDD on any new feature code or bug fixes. Use Test Driven Development whenever possible. See the /tdd skill.

@@ -1,19 +1,36 @@
+# ---------------------------------------------------------------------------
+# Appended to .env.local by `npm run env:pull`.
+#
+# `vercel env pull` rewrites .env.local and strips comments, so this file is
+# the only place local-setup notes survive a pull. Keep everything here
+# commented out — an uncommented assignment would override a pulled value.
+#
+# Despite the filename, nothing here is aliased. lib/db.ts and
+# scripts/db-migrate.mjs read POSTGRES_URL_NON_POOLING → POSTGRES_URL →
+# DATABASE_URL directly, and the Neon integration already supplies those exact
+# names. The file is kept for the notes below.
+# ---------------------------------------------------------------------------
 
-# ---------------------------------------------------------------------------
-# Auth.js (NextAuth v5)
-# Add these to your Vercel project env (or to .env.local for local dev).
-# Postgres connection vars come straight from the Vercel ↔ Neon integration
-# under their standard names (POSTGRES_URL, POSTGRES_URL_NON_POOLING,
-# DATABASE_URL) and don't need aliasing here.
-# ---------------------------------------------------------------------------
-# AUTH_SECRET="<openssl rand -hex 32>"
-# AUTH_URL="http://localhost:3000"          # not required when running on Vercel
-# AUTH_TRUST_HOST=true                      # set on non-Vercel deployments
+# --- Local database: set by hand, a pull cannot supply it -------------------
 #
-# Google OAuth (https://console.cloud.google.com)
-# AUTH_GOOGLE_ID=""
-# AUTH_GOOGLE_SECRET=""
+# The Neon integration's vars are Sensitive (write-only) and attached only to
+# the Preview and Production environments, so the Development pull returns
+# nothing for them.
 #
-# Email magic link (any SMTP service: Resend, Postmark, Mailgun, SES, etc.)
-# EMAIL_SERVER="smtp://user:pass@smtp.example.com:587"
-# EMAIL_FROM="Telescope <noreply@telescope.app>"
+# Copy the Neon `dev` branch's DIRECT connection string — the host WITHOUT
+# `-pooler` in it; the console hands you the pooled one unless you turn
+# pooling off — and set:
+#
+# POSTGRES_URL_NON_POOLING="postgresql://USER:PASSWORD@HOST.REGION.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+#
+# A pull keeps this value when it is already present, but keeps it silently:
+# it never warns that the value is stale, which is how .env.local once sat
+# pointed at a retired database unnoticed. Confirm the host with the first
+# line of `npm run db:migrate`. See AGENTS.md › Local database.
+
+# --- Email delivery: leave RESEND_API_KEY unset locally ---------------------
+#
+# With no key set, sign-in codes are written to the dev server log, which is
+# what lets a fresh clone sign in without provisioning any mail service.
+# If the key IS set, lib/auth/delivery.ts refuses to send rather than falling
+# back to the log, so that live sign-in codes never land in a log stream.

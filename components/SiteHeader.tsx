@@ -1,6 +1,5 @@
 import Link from "next/link";
-import type { Session } from "next-auth";
-import { signOut } from "@/auth";
+import { signOut, type Session } from "@/auth";
 
 interface Props {
   session: Session | null;
