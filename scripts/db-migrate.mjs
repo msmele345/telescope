@@ -26,7 +26,10 @@ const connectionString =
 
 if (!connectionString) {
   console.error(
-    "No Postgres connection string found. Run `npm run env:pull` first."
+    "No Postgres connection string found. Set POSTGRES_URL_NON_POOLING in .env.local\n" +
+      "to the Neon `dev` branch's direct (non-pooled) connection string.\n" +
+      "`npm run env:pull` will not supply it \u2014 the Neon vars are Sensitive and are\n" +
+      "attached only to Preview and Production. See AGENTS.md \u203a Local database."
   );
   process.exit(1);
 }
@@ -45,8 +48,9 @@ const client = new pg.Client({
 });
 await client.connect();
 
-// Say out loud where this is pointed. Every environment shares one instance,
-// so "which database am I about to migrate" is never a rhetorical question.
+// Say out loud where this is pointed. Local dev, Preview and Production are
+// separate Neon branches, and this runner migrates whichever one .env.local
+// names — so "which database am I about to migrate" is never rhetorical.
 const target = new URL(cleanedConnectionString);
 console.log(`→ target ${target.host}${target.pathname}`);
 

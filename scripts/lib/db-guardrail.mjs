@@ -1,12 +1,12 @@
 /**
  * Pure helpers for the migration runner's co-tenancy preflight.
  *
- * Production, Preview and Development all point at the same Postgres, so
- * running the migration runner from a laptop *is* the production migration.
- * For a while that instance also hosted a second, unrelated application in
- * the same `public` schema — which meant a migration dropping a generically
- * named table (`sessions`, `users`, `accounts`) could destroy someone else's
- * data. These helpers detect that situation so the runner can refuse.
+ * Telescope's Postgres once sat in an instance shared with a second,
+ * unrelated application in the same `public` schema — which meant a migration
+ * dropping a generically named table (`sessions`, `users`, `accounts`) could
+ * destroy someone else's data. It now has its own Neon project, but the runner
+ * still writes to whatever `.env.local` names, so these helpers stay as a
+ * standing check: detect co-tenancy so the runner can refuse.
  *
  * No database access in here, so the logic is testable on its own.
  */
