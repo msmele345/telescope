@@ -17,9 +17,9 @@ See @plans/v2-lightweight-auth.md for the auth refactor. This work is active.
 - npm run build 
 - npm run env:pull  # pulls the Development env into .env.local, then appends scripts/env-aliases.sh
   # It does NOT supply a database connection string — see "Local database" below.
-  # (env-aliases.sh is currently comments only, so it appends no aliases. A pull keeps
-  # any local var the Development env doesn't define, but keeps it silently, and it
-  # strips comments from .env.local.)
+  # A pull keeps any local var the Development env doesn't define, but keeps it
+  # silently, and it strips comments. env-aliases.sh re-appends the local-setup
+  # notes afterwards, which is the only reason they survive a pull.
 - npx vercel --yes # for deploying current branch to vercel preview
 
 # Local database
