@@ -184,10 +184,10 @@ to an attacker-supplied URL *after* authenticating someone is a phishing primiti
 
 **Blocked by:** Email-code sign-in, end to end, in local dev.
 
-- [ ] Signing in from a constellation page, a star popup, or the profile redirect returns the visitor to where they were.
-- [ ] A relative destination is carried through the whole two-step flow, including across a resend.
-- [ ] An absolute or off-site destination is discarded in favour of the default, and cannot be used to forward a freshly authenticated visitor off-site.
-- [ ] Component tests cover both the carried-through and the discarded case.
+- [x] Signing in from a constellation page, a star popup, or the profile redirect returns the visitor to where they were.
+- [x] A relative destination is carried through the whole two-step flow, including across a resend.
+- [x] An absolute or off-site destination is discarded in favour of the default, and cannot be used to forward a freshly authenticated visitor off-site.
+- [x] Component tests cover both the carried-through and the discarded case.
 
 ---
 

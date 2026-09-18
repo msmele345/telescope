@@ -27,6 +27,11 @@ export function safeReturnTo(raw: unknown): string {
   if (url.origin !== PROBE_ORIGIN) return DEFAULT_RETURN_TO;
   // Landing back on the sign-in form after signing in is a dead end.
   if (url.pathname === "/login") return DEFAULT_RETURN_TO;
+  // Dot-segments collapse during parsing: `/..//evil.example` resolves onto
+  // the probe origin yet normalises to the path `//evil.example`, which a
+  // browser reads as protocol-relative. Judge the value we would hand back,
+  // not just the one we parsed.
+  if (url.pathname.startsWith("//")) return DEFAULT_RETURN_TO;
 
   return url.pathname + url.search + url.hash;
 }

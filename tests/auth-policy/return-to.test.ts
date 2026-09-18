@@ -1,11 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_RETURN_TO, loginHref, safeReturnTo } from "@/lib/auth-policy";
+import { loginHref, safeReturnTo } from "@/lib/auth-policy";
 
 describe("safeReturnTo", () => {
-  it("defaults to the sky map", () => {
-    expect(DEFAULT_RETURN_TO).toBe("/");
-  });
-
   it("accepts a relative path", () => {
     expect(safeReturnTo("/constellations/orion")).toBe("/constellations/orion");
   });
@@ -23,6 +19,12 @@ describe("safeReturnTo", () => {
     ["a backslash-smuggled host", "/\\evil.example"],
     ["a tab-smuggled host", "/\t/evil.example"],
     ["a newline-smuggled host", "/\n/evil.example"],
+    // Dot-segments collapse during parsing into a protocol-relative path.
+    ["a dot-segment-smuggled host", "/..//evil.example"],
+    ["a single-dot-smuggled host", "/.//evil.example"],
+    ["an encoded-dot-smuggled host", "/%2e%2e//evil.example"],
+    ["a nested-dot-smuggled host", "/a/..//evil.example"],
+    ["a dot-segment-smuggled backslash host", "/..\\/evil.example"],
     ["a javascript: URL", "javascript:alert(1)"],
     ["a path without a leading slash", "constellations/orion"],
     ["an empty string", ""],
@@ -40,6 +42,27 @@ describe("safeReturnTo", () => {
   it("does not send a freshly signed-in visitor back to the login page", () => {
     expect(safeReturnTo("/login")).toBe("/");
     expect(safeReturnTo("/login?returnTo=%2Fprofile")).toBe("/");
+  });
+});
+
+describe("safeReturnTo never yields an off-site destination", () => {
+  const SITE = "https://telescope.example";
+  const prefixes = ["/", "/a/", "/./", "/../", "/%2e%2e/", "/%2E/", "/a/../"];
+  const middles = ["", "/", "\\", "\t", "\n", " ", "./", "../", "%2f", "%5c"];
+  const hosts = ["evil.example", "/evil.example", "\\evil.example", "@evil.example"];
+
+  it("keeps every combination of smuggling tricks on the site's own origin", () => {
+    for (const p of prefixes) {
+      for (const m of middles) {
+        for (const h of hosts) {
+          const raw = p + m + h;
+          const out = safeReturnTo(raw);
+          // As a browser would resolve the Location header we send.
+          expect(new URL(out, SITE).origin, JSON.stringify(raw)).toBe(SITE);
+          expect(out.startsWith("/") && !out.startsWith("//")).toBe(true);
+        }
+      }
+    }
   });
 });
 
