@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useState, useTransition } from "react";
 import type { ToggleResult } from "@/app/actions/user-data";
+import SignInLink from "@/components/SignInLink";
 import { actionButtonStyle, signInLinkStyle } from "./styles";
 
 export interface ToggleButtonProps {
@@ -38,9 +38,7 @@ export default function ToggleButton({
 
   if (!isAuthenticated) {
     return (
-      <Link href="/login" style={signInLinkStyle}>
-        Sign in {signInHint}
-      </Link>
+      <SignInLink style={signInLinkStyle}>Sign in {signInHint}</SignInLink>
     );
   }
 

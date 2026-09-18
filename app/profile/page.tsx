@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { auth } from "@/auth";
+import { loginHref } from "@/lib/auth-policy";
 import {
   listFavorites,
   listRead,
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
 export default async function ProfilePage() {
   const session = await auth();
   const userId = session?.user?.id;
-  if (!userId) redirect("/login");
+  if (!userId) redirect(loginHref("/profile"));
 
   const [favorites, viewedRows, readRows] = await Promise.all([
     listFavorites(userId),

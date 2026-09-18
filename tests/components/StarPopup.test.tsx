@@ -57,6 +57,15 @@ describe("<StarPopup />", () => {
     expect(link).toHaveAttribute("href", "/constellations/orion");
   });
 
+  it("signs a visitor in back to this star's popup", async () => {
+    render(<StarPopup star={BETELGEUSE} onClose={() => {}} />);
+    const link = await screen.findByRole("link", {
+      name: /sign in to favorite this star/i,
+    });
+    // The popup lives only in client state; the deep link reopens it.
+    expect(link).toHaveAttribute("href", "/login?returnTo=%2F%3Fstar%3D2061");
+  });
+
   it("falls back to HR id and hides the Distance row when distance is absent", () => {
     render(<StarPopup star={UNNAMED_STAR} onClose={() => {}} />);
     expect(screen.getByRole("heading", { name: /HR 9999/i })).toBeInTheDocument();

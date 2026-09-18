@@ -8,6 +8,7 @@ import {
   isValidEmail,
   normalizeEmail,
   retryAfterMs,
+  safeReturnTo,
 } from "@/lib/auth-policy";
 import {
   consumeLoginCode,
@@ -66,11 +67,13 @@ export async function requestCode(email: string): Promise<RequestCodeResult> {
  * Check a submitted code and, if it holds up, sign the visitor in.
  *
  * On success this redirects rather than returning, which is what keeps the
- * client form free of any routing of its own.
+ * client form free of any routing of its own. `returnTo` is re-checked here
+ * rather than trusted from the form: a server action can be called directly.
  */
 export async function verifyCode(
   email: string,
-  code: string
+  code: string,
+  returnTo?: string
 ): Promise<VerifyCodeResult | void> {
   const normalized = normalizeEmail(email);
   if (!isValidEmail(normalized)) return { status: "invalidEmail" };
@@ -101,5 +104,5 @@ export async function verifyCode(
   await createSession(userId, token, now);
   writeSessionToken(token);
 
-  redirect("/");
+  redirect(safeReturnTo(returnTo));
 }
