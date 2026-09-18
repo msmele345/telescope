@@ -2,10 +2,18 @@
 
 import { useState, useTransition } from "react";
 import { requestCode, verifyCode } from "@/app/actions/auth";
+// Not the barrel: it re-exports the node:crypto helpers.
+import { safeReturnTo } from "@/lib/auth-policy/return-to";
 
 type Step = "email" | "code";
 
-export default function LoginForm() {
+interface Props {
+  /** Where to land after signing in. Untrusted — anything off-site is dropped. */
+  returnTo?: string;
+}
+
+export default function LoginForm({ returnTo }: Props) {
+  const destination = safeReturnTo(returnTo);
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -81,7 +89,7 @@ export default function LoginForm() {
       onSubmit={(e) => {
         e.preventDefault();
         startTransition(async () => {
-          const result = await verifyCode(email, code);
+          const result = await verifyCode(email, code, destination);
           // Nothing comes back on success — the action redirected us away.
           if (!result) return;
           setNotice(null);

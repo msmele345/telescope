@@ -35,6 +35,21 @@ describe("<FavoriteButton />", () => {
     expect(getFavoriteState).not.toHaveBeenCalled();
   });
 
+  it("carries an explicit destination into the sign-in link", () => {
+    render(
+      <FavoriteButton
+        type="constellation"
+        targetId="orion"
+        initialState="unauth"
+        returnTo="/constellations/orion"
+      />
+    );
+    expect(screen.getByRole("link", { name: /sign in/i })).toHaveAttribute(
+      "href",
+      "/login?returnTo=%2Fconstellations%2Forion"
+    );
+  });
+
   it("fetches state on mount when initialState is omitted", async () => {
     getFavoriteState.mockResolvedValue({ status: "not" });
     render(<FavoriteButton type="star" targetId="2061" />);

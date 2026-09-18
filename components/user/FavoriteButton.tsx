@@ -1,12 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import {
   getFavoriteState,
   toggleFavorite,
 } from "@/app/actions/user-data";
 import type { FavoriteType } from "@/lib/user-data";
+import SignInLink from "@/components/SignInLink";
 import { actionButtonStyle, signInLinkStyle } from "./styles";
 
 export interface FavoriteButtonProps {
@@ -16,6 +16,8 @@ export interface FavoriteButtonProps {
   initialState?: "is" | "not" | "unauth";
   /** Hint shown next to the sign-in link, e.g. "to favorite this star". */
   signInHint?: string;
+  /** Where signing in should return to. Defaults to the current path. */
+  returnTo?: string;
 }
 
 export default function FavoriteButton({
@@ -23,6 +25,7 @@ export default function FavoriteButton({
   targetId,
   initialState,
   signInHint = "to save favorites",
+  returnTo,
 }: FavoriteButtonProps) {
   const [state, setState] = useState<
     "loading" | "is" | "not" | "unauth" | "invalid"
@@ -42,9 +45,9 @@ export default function FavoriteButton({
 
   if (state === "unauth") {
     return (
-      <Link href="/login" style={signInLinkStyle}>
+      <SignInLink returnTo={returnTo} style={signInLinkStyle}>
         Sign in {signInHint}
-      </Link>
+      </SignInLink>
     );
   }
 

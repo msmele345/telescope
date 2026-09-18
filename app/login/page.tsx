@@ -2,14 +2,20 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import LoginForm from "@/components/LoginForm";
+import { safeReturnTo } from "@/lib/auth-policy";
 
 export const metadata = {
   title: "Sign in — Telescope",
 };
 
-export default async function LoginPage() {
+interface Props {
+  searchParams: { returnTo?: string | string[] };
+}
+
+export default async function LoginPage({ searchParams }: Props) {
+  const returnTo = safeReturnTo(searchParams.returnTo);
   const session = await auth();
-  if (session?.user) redirect("/");
+  if (session?.user) redirect(returnTo);
 
   return (
     <main style={pageStyle}>
@@ -23,7 +29,7 @@ export default async function LoginPage() {
           remember your location.
         </p>
       </header>
-      <LoginForm />
+      <LoginForm returnTo={returnTo} />
     </main>
   );
 }
