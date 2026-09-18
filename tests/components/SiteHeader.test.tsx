@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import type { Session } from "next-auth";
+import type { Session } from "@/auth";
 
 // SiteHeader imports `signOut` from "@/auth", which would pull in pg + the
 // adapter. Stub the module before importing the component under test.
