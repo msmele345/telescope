@@ -38,6 +38,7 @@ export default function StarPopup({ star, onClose }: StarPopupProps) {
               type="star"
               targetId={String(star.id)}
               signInHint="to favorite this star"
+              returnTo={`/?star=${star.id}`}
             />
           </div>
           {constellation && (

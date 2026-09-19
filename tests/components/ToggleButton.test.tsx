@@ -3,6 +3,12 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ToggleButton from "@/components/user/ToggleButton";
 
+// Outside an app router `usePathname` yields null; tests opt in to a path.
+const { usePathname } = vi.hoisted(() => ({
+  usePathname: vi.fn<() => string | null>(() => null),
+}));
+vi.mock("next/navigation", () => ({ usePathname }));
+
 describe("<ToggleButton />", () => {
   it("renders sign-in link when unauthenticated", () => {
     render(
@@ -18,6 +24,24 @@ describe("<ToggleButton />", () => {
     expect(
       screen.getByRole("link", { name: /sign in to mark constellations as viewed/i })
     ).toHaveAttribute("href", "/login");
+  });
+
+  it("signs a visitor in back to the page the prompt was on", () => {
+    usePathname.mockReturnValueOnce("/constellations/orion");
+    render(
+      <ToggleButton
+        action={vi.fn()}
+        initialPressed={false}
+        isAuthenticated={false}
+        inactiveLabel="Mark as viewed"
+        activeLabel="Viewed"
+        signInHint="to mark constellations as viewed"
+      />
+    );
+    expect(screen.getByRole("link", { name: /sign in/i })).toHaveAttribute(
+      "href",
+      "/login?returnTo=%2Fconstellations%2Forion"
+    );
   });
 
   it("invokes the action and flips to active on success", async () => {

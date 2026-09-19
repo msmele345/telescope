@@ -57,7 +57,7 @@ describe("<LoginForm />", () => {
 
     await user.type(codeInput, "123456");
     await user.click(screen.getByRole("button", { name: /^sign in$/i }));
-    expect(verifyCode).toHaveBeenCalledWith("ada@example.com", "123456");
+    expect(verifyCode).toHaveBeenCalledWith("ada@example.com", "123456", "/");
   });
 
   it("submits the entered code to verifyCode", async () => {
@@ -69,7 +69,7 @@ describe("<LoginForm />", () => {
     await user.type(codeInput, "123456");
     await user.click(screen.getByRole("button", { name: /^sign in$/i }));
 
-    expect(verifyCode).toHaveBeenCalledWith("ada@example.com", "123456");
+    expect(verifyCode).toHaveBeenCalledWith("ada@example.com", "123456", "/");
   });
 
   it("accepts a pasted code, preserving a leading zero", async () => {
@@ -82,7 +82,7 @@ describe("<LoginForm />", () => {
     await user.paste("012345");
     await user.click(screen.getByRole("button", { name: /^sign in$/i }));
 
-    expect(verifyCode).toHaveBeenCalledWith("ada@example.com", "012345");
+    expect(verifyCode).toHaveBeenCalledWith("ada@example.com", "012345", "/");
   });
 
   it("survives a successful verify, which redirects instead of returning", async () => {
@@ -231,6 +231,72 @@ describe("<LoginForm />", () => {
     expect(codeInput).toHaveFocus();
     await user.keyboard("123456{Enter}");
 
-    expect(verifyCode).toHaveBeenCalledWith("ada@example.com", "123456");
+    expect(verifyCode).toHaveBeenCalledWith("ada@example.com", "123456", "/");
+  });
+
+  describe("returning the visitor to where they were", () => {
+    async function signIn(user: ReturnType<typeof userEvent.setup>) {
+      verifyCode.mockResolvedValue(undefined);
+      const codeInput = await advanceToCodeEntry(user);
+      await user.type(codeInput, "123456");
+      await user.click(screen.getByRole("button", { name: /^sign in$/i }));
+    }
+
+    it("carries a relative destination through to the verify action", async () => {
+      const user = userEvent.setup();
+      render(<LoginForm returnTo="/constellations/orion" />);
+
+      await signIn(user);
+
+      expect(verifyCode).toHaveBeenCalledWith(
+        "ada@example.com",
+        "123456",
+        "/constellations/orion"
+      );
+    });
+
+    it("keeps the destination's query, so a star popup can reopen", async () => {
+      const user = userEvent.setup();
+      render(<LoginForm returnTo="/?star=424" />);
+
+      await signIn(user);
+
+      expect(verifyCode).toHaveBeenCalledWith(
+        "ada@example.com",
+        "123456",
+        "/?star=424"
+      );
+    });
+
+    it("still carries the destination after a resend", async () => {
+      const user = userEvent.setup();
+      verifyCode.mockResolvedValue(undefined);
+      render(<LoginForm returnTo="/profile" />);
+
+      await advanceToCodeEntry(user);
+      await user.click(screen.getByRole("button", { name: /send a new code/i }));
+      const codeInput = await screen.findByLabelText(/six-digit code/i);
+      await user.type(codeInput, "123456");
+      await user.click(screen.getByRole("button", { name: /^sign in$/i }));
+
+      expect(verifyCode).toHaveBeenCalledWith(
+        "ada@example.com",
+        "123456",
+        "/profile"
+      );
+    });
+
+    it.each([
+      ["an absolute", "https://evil.example/phish"],
+      ["a protocol-relative", "//evil.example/phish"],
+      ["a dot-segment-smuggled", "/..//evil.example/phish"],
+    ])("discards %s destination in favour of the default", async (_l, value) => {
+      const user = userEvent.setup();
+      render(<LoginForm returnTo={value} />);
+
+      await signIn(user);
+
+      expect(verifyCode).toHaveBeenCalledWith("ada@example.com", "123456", "/");
+    });
   });
 });

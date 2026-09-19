@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { signOut, type Session } from "@/auth";
+import SignInLink from "./SignInLink";
 
 interface Props {
   session: Session | null;
@@ -32,9 +33,7 @@ export default function SiteHeader({ session }: Props) {
             </form>
           </>
         ) : (
-          <Link href="/login" style={linkStyle}>
-            Sign in
-          </Link>
+          <SignInLink style={linkStyle}>Sign in</SignInLink>
         )}
       </nav>
     </header>
