@@ -17,19 +17,19 @@ function describeWindow(ttlMs: number): string {
 
 /** The message a sign-in code travels in. The code stays a string throughout. */
 export function composeCodeEmail(code: string, ttlMs: number): CodeEmail {
-  const window = describeWindow(ttlMs);
+  const validFor = describeWindow(ttlMs);
   return {
     subject: `${code} is your Telescope sign-in code`,
     text:
       `Your Telescope sign-in code is ${code}\n\n` +
-      `It is valid for ${window} and works once. Type it into the tab where ` +
+      `It is valid for ${validFor} and works once. Type it into the tab where ` +
       `you asked for it.\n\n` +
       `If you didn't try to sign in to Telescope, you can ignore this email.\n`,
     html:
       `<div style="font-family:system-ui,sans-serif;color:#0b1026;max-width:480px">` +
       `<p style="font-size:16px">Your Telescope sign-in code is</p>` +
       `<p style="font-size:32px;font-weight:700;letter-spacing:6px;font-family:ui-monospace,monospace">${code}</p>` +
-      `<p>It is valid for <strong>${window}</strong> and works once. ` +
+      `<p>It is valid for <strong>${validFor}</strong> and works once. ` +
       `Type it into the tab where you asked for it.</p>` +
       `<p style="color:#5a6178;font-size:13px">If you didn't try to sign in to Telescope, you can ignore this email.</p>` +
       `</div>`,

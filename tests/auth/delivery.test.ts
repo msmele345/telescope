@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CODE_TTL_MS } from "@/lib/auth-policy";
+
+const send = vi.fn();
+vi.mock("resend", () => ({
+  Resend: vi.fn(() => ({ emails: { send: (...args: unknown[]) => send(...args) } })),
+}));
+
 import { composeCodeEmail, deliverCode } from "@/lib/auth/delivery";
 
 describe("composeCodeEmail", () => {
@@ -54,6 +60,53 @@ describe("deliverCode without a mail provider", () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
 
     await expect(deliverCode("ada@example.com", "004213")).rejects.toThrow(/RESEND_API_KEY/);
+    expect(log.mock.calls.flat().join(" ")).not.toContain("004213");
+  });
+});
+
+describe("deliverCode with Resend configured", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+    send.mockReset();
+  });
+
+  it("emails the code to the address, from Telescope, without logging it", async () => {
+    vi.stubEnv("RESEND_API_KEY", "re_test");
+    vi.stubEnv("EMAIL_FROM", "");
+    send.mockResolvedValue({ data: { id: "e1" }, error: null });
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await deliverCode("ada@example.com", "004213");
+
+    expect(send).toHaveBeenCalledTimes(1);
+    const payload = send.mock.calls[0][0];
+    expect(payload.to).toBe("ada@example.com");
+    expect(payload.from).toMatch(/^Telescope </);
+    expect(payload.text).toContain("004213");
+    expect(payload.text).toContain("10 minutes");
+    expect(log.mock.calls.flat().join(" ")).not.toContain("004213");
+  });
+
+  it("sends from EMAIL_FROM when it is set", async () => {
+    vi.stubEnv("RESEND_API_KEY", "re_test");
+    vi.stubEnv("EMAIL_FROM", "Telescope <signin@example.org>");
+    send.mockResolvedValue({ data: { id: "e1" }, error: null });
+
+    await deliverCode("ada@example.com", "123456");
+
+    expect(send.mock.calls[0][0].from).toBe("Telescope <signin@example.org>");
+  });
+
+  it("fails loudly when Resend rejects the send, rather than logging the code", async () => {
+    vi.stubEnv("RESEND_API_KEY", "re_test");
+    send.mockResolvedValue({
+      data: null,
+      error: { message: "You can only send testing emails to your own email address", statusCode: 403, name: "validation_error" },
+    });
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await expect(deliverCode("ada@example.com", "004213")).rejects.toThrow(/own email address/);
     expect(log.mock.calls.flat().join(" ")).not.toContain("004213");
   });
 });

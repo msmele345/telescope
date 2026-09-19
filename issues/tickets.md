@@ -208,9 +208,9 @@ path end to end. Delivery to anyone else waits on the operator ticket.
 **Blocked by:** Email-code sign-in, end to end, in local dev.
 
 - [ ] A requested code arrives by email within seconds, clearly identifiable as coming from Telescope.
-- [ ] The email states the code's validity window.
-- [ ] With no API key configured, the code still goes to the server log and local sign-in still works.
-- [ ] The Resend SDK is the only dependency added; no mail transport configuration is required for local development.
+- [x] The email states the code's validity window.
+- [x] With no API key configured, the code still goes to the server log and local sign-in still works.
+- [x] The Resend SDK is the only dependency added; no mail transport configuration is required for local development.
 - [ ] The Resend Marketplace integration is provisioned on the project, so the API key is injected across all environments. This is a CLI action, but the Marketplace flow needs the operator to approve it in the browser.
 
 ---
