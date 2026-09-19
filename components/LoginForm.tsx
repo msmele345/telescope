@@ -36,6 +36,13 @@ export default function LoginForm({ returnTo }: Props) {
         );
         return;
       }
+      if (result.status === "deliveryFailed") {
+        setNotice(null);
+        setError(
+          "We couldn’t send your code. Wait a minute, then try again."
+        );
+        return;
+      }
       setError(null);
       setCode("");
       // Display and verify against the address the code actually went to.

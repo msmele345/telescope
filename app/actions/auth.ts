@@ -25,7 +25,9 @@ export type RequestCodeResult =
   /** `email` is the normalised address the code was actually sent to. */
   | { status: "sent"; email: string }
   | { status: "invalidEmail" }
-  | { status: "rateLimited"; retryAfterSeconds: number };
+  | { status: "rateLimited"; retryAfterSeconds: number }
+  /** The code was issued but the email did not go out. */
+  | { status: "deliveryFailed" };
 
 /**
  * Only the ways verification can fail. A success never reaches the caller:
@@ -58,7 +60,14 @@ export async function requestCode(email: string): Promise<RequestCodeResult> {
     };
   }
 
-  await deliverCode(normalized, code);
+  try {
+    await deliverCode(normalized, code);
+  } catch (err) {
+    // The issued row stays as rate-limit history, so a retry inside the
+    // cooldown is refused — the form's message says to wait a minute.
+    console.error("Sign-in code delivery failed:", err);
+    return { status: "deliveryFailed" };
+  }
 
   return { status: "sent", email: normalized };
 }
