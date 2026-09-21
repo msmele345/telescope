@@ -33,9 +33,11 @@
 # With RESEND_API_KEY unset, sign-in codes are written to the dev server log,
 # which is what lets a fresh clone sign in without provisioning a mail service.
 #
-# The Resend Marketplace integration injects RESEND_API_KEY into every Vercel
-# environment, Development included, so a pull puts it here and local sign-in
-# then sends real mail. Delete the pulled line to go back to the log.
+# The Resend Marketplace integration is connected to Production and Preview
+# only, so a pull never brings the key here. To try real delivery locally,
+# paste a key from resend.com by hand (and delete it to go back to the log):
+#
+# RESEND_API_KEY="re_..."
 #
 # Until a sending domain is verified, mail goes from Resend's shared sender and
 # reaches ONLY the Resend account owner's address. Once one is verified, set

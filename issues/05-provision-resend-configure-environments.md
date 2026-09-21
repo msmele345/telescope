@@ -17,5 +17,6 @@ records are all operator actions.
 **Blocked by:** None — can run in parallel with everything above.
 
 - [ ] A custom domain is purchased, attached to the project, and verified with Resend's DNS records.
-- [ ] The sending address is set for Production, Preview, and Development.
+- [ ] The Resend Marketplace integration is provisioned for Production and Preview only — not Development, so local sign-in keeps logging codes: `vercel integration add resend/resend-email -e production -e preview --no-env-pull -m domain=<domain> -m region=us-east-1`. The product requires an owned domain at provisioning, so this follows the purchase. Confirm the injected name is exactly `RESEND_API_KEY` (no prefix).
+- [ ] The sending address is set as `EMAIL_FROM` (e.g. `Telescope <signin@<domain>>`) for Production, Preview, and Development.
 - [ ] The obsolete Google client id, client secret, auth secret, and SMTP settings are deleted from the preview environment, leaving no unused secrets behind.
