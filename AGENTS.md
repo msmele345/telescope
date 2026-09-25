@@ -1,20 +1,16 @@
 ## WHAT — Stack & Structure
-- Project Name: Telescope
 - Runtime: Node.js 22, npm 10.9.4
-- Framework: Next.js 14.2
 - DB: Postgres on Neon (via the Vercel Marketplace integration)
-- Key dirs: src/app/ (routes), src/components/
 
 # Project Overview and Plan:
-See @docs/PRD.md to review project goals — note its auth section (NextAuth, Google
-OAuth, magic links) is **superseded** by the v2 plan below and no longer describes the code.
-See @plans/telescope-star-map.md for formal plan
-See @plans/v2-lightweight-auth.md for the auth refactor. This work is active. 
+Read these on demand — they are long, so they are not auto-loaded:
+- `docs/PRD.md` — product goals. Its auth section (NextAuth, Google OAuth, magic links) is
+  **superseded** by the v2 plan below and no longer describes the code.
+- `plans/telescope-star-map.md` — the formal phased plan (Phases 1–12).
+- `plans/v2-lightweight-auth.md` — the auth refactor. **This work is active**: read it before
+  touching anything auth-, session-, login-, or email-related.
 
 # Run Commands:
-- npm run dev 
-- npm test 
-- npm run build 
 - npm run env:pull  # pulls the Development env into .env.local, then appends scripts/env-aliases.sh
   # It does NOT supply a database connection string — see "Local database" below.
   # A pull keeps any local var the Development env doesn't define, but keeps it
@@ -55,9 +51,6 @@ that co-tenancy is known and intended.
 1. TDD on any new feature code or bug fixes. Use Test Driven Development whenever possible. See the /tdd skill.
 2. Red green refactor. Reference the tdd skill and follow it.
 3. Always check off tracer bullet boxes in issues or tickets worked when finished to verify competion.
-
-# Git Remote:
-https://github.com/msmele345/telescope/
 
 # Git Strategy and Instructions
 - Create feature branches off of develop for each new feature or task. Name branches using the format `feat/short-description` (e.g., `feat/spotify-integration`).
