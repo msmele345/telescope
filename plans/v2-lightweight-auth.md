@@ -486,20 +486,27 @@ verified manually, consistent with the project's existing position on end-to-end
 - **The Next.js major-version upgrade.** Backlogged below.
 - **Any product feature.** Favorites, profile, lessons, and the sky map are touched only insofar
   as their existing behaviour must be preserved.
-- **Fixing the shared-database arrangement.** Noted below as a known risk.
+- **Fixing the shared-database arrangement.** Noted below as a known risk. *(Since resolved for
+  local development — see below.)*
 
 ## Further Notes
 
-### The database is shared across all environments
+### The database was shared across all environments
 
-Production, Preview, and Development all point at the same Postgres instance. This is why the
-"zero rows" finding is authoritative rather than a quirk of the local environment — and it is
-also why running the migration runner locally *is* the production migration.
+*When this spec was written*, Production, Preview, and Development all pointed at the same
+Postgres instance. That is why the "zero rows" finding was authoritative rather than a quirk of
+the local environment, and why running the migration runner locally *was* the production
+migration.
 
-It is a latent risk worth naming: a destructive migration run against a developer's machine
-reaches Production, and preview deployments write into production data. It is out of scope to
-fix here, but it should not be discovered by accident later. Separating environments is a
-reasonable backlog item.
+**That is no longer true for local development.** The Neon project now has a `production`
+branch and a `dev` branch (a copy-on-write copy of a migrated `production`), and local
+development is pointed at `dev` by hand — see "Local database" in `AGENTS.md`. Running
+`npm run db:migrate` from a laptop now touches `dev` only. A migration intended for Production
+must be run deliberately against the `production` branch's connection string.
+
+What remains shared: the Neon integration's variables are single entries scoped to both Preview
+and Production, so preview deployments still read and write production data unless the
+integration is configured to branch per preview. Separating Preview is a reasonable backlog item.
 
 ### On sequencing against the Next.js upgrade
 
