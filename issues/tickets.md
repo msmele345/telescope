@@ -142,30 +142,30 @@ reason. No dependency injection — nothing in this codebase uses it.
 
 **Blocked by:** Auth policy module.
 
-- [ ] A visitor can enter an email, read the code from the server log, and sign in — with no mail service, API key, or OAuth client configured anywhere.
-- [ ] Signing in on an address that has never been seen creates the account implicitly; signing in again on the same address resolves to the same account and the same saved data.
-- [ ] Email casing and stray whitespace are ignored when resolving the account.
-- [ ] The response to a code request is identical whether or not the address has an account.
-- [ ] No user row is created for an address that requests a code and never completes sign-in.
-- [ ] The session survives a browser restart, and an active user's session extends as they keep using Telescope.
-- [ ] Sign-out ends the session on the server; the cookie cannot be replayed afterwards.
-- [ ] The session cookie is `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/`, thirty days.
-- [ ] Only the hash of the session token and of the login code are stored — never the raw values.
-- [ ] Requesting a new code invalidates the previous one: the earlier code no longer verifies, the later one does. The login-code wrapper marks any prior unspent row for the address as consumed (latest wins) — moved here from #1, since the policy module only ever sees one row.
-- [ ] A failed verify is persisted whenever `evaluateCodeAttempt` returns `wrong` or `locked` with `countsAsAttempt: true`, so the fifth wrong guess actually locks the code.
-- [ ] An expired session returns the visitor to sign-in rather than an error.
-- [ ] The form advances to code entry showing the address it was sent to, and offers a way back to correct a mistyped address and a control to resend.
-- [ ] Codes can be pasted as well as typed, including one with a leading zero.
-- [ ] Each error state renders its own distinct human-readable message: invalid email, rate-limited (with the wait), wrong code (with attempts remaining), code expired, code locked out.
-- [ ] The form is operable by keyboard alone and labelled for screen readers.
-- [ ] The sky map, constellation pages, and sky directory remain fully public.
-- [ ] Favoriting, marking viewed, marking read, the profile page, and the promotion of an anonymously-set zipcode to the account all keep working unchanged.
-- [ ] Unauthenticated visitors still see a sign-in prompt where a save control would be.
-- [ ] `next-auth`, `@auth/pg-adapter`, `nodemailer`, `@types/nodemailer`, the NextAuth module-augmentation type declaration, and the NextAuth route handler are all gone.
-- [ ] No pre-release dependency remains anywhere in the authentication path.
-- [ ] The whole authentication implementation is readable in one sitting, with no adapter contract to consult.
-- [ ] The full existing test suite passes, with changes confined to import lines.
-- [ ] The migration record shows both the outstanding data migration and the new auth migration applied; the favorites, viewed-constellations, and read-lessons tables exist.
+- [x] A visitor can enter an email, read the code from the server log, and sign in — with no mail service, API key, or OAuth client configured anywhere.
+- [x] Signing in on an address that has never been seen creates the account implicitly; signing in again on the same address resolves to the same account and the same saved data.
+- [x] Email casing and stray whitespace are ignored when resolving the account.
+- [x] The response to a code request is identical whether or not the address has an account.
+- [x] No user row is created for an address that requests a code and never completes sign-in.
+- [x] The session survives a browser restart, and an active user's session extends as they keep using Telescope.
+- [x] Sign-out ends the session on the server; the cookie cannot be replayed afterwards.
+- [x] The session cookie is `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/`, thirty days.
+- [x] Only the hash of the session token and of the login code are stored — never the raw values.
+- [x] Requesting a new code invalidates the previous one: the earlier code no longer verifies, the later one does. The login-code wrapper marks any prior unspent row for the address as consumed (latest wins) — moved here from #1, since the policy module only ever sees one row.
+- [x] A failed verify is persisted whenever `evaluateCodeAttempt` returns `wrong` or `locked` with `countsAsAttempt: true`, so the fifth wrong guess actually locks the code.
+- [x] An expired session returns the visitor to sign-in rather than an error.
+- [x] The form advances to code entry showing the address it was sent to, and offers a way back to correct a mistyped address and a control to resend.
+- [x] Codes can be pasted as well as typed, including one with a leading zero.
+- [x] Each error state renders its own distinct human-readable message: invalid email, rate-limited (with the wait), wrong code (with attempts remaining), code expired, code locked out.
+- [x] The form is operable by keyboard alone and labelled for screen readers.
+- [x] The sky map, constellation pages, and sky directory remain fully public.
+- [x] Favoriting, marking viewed, marking read, the profile page, and the promotion of an anonymously-set zipcode to the account all keep working unchanged.
+- [x] Unauthenticated visitors still see a sign-in prompt where a save control would be.
+- [x] `next-auth`, `@auth/pg-adapter`, `nodemailer`, `@types/nodemailer`, the NextAuth module-augmentation type declaration, and the NextAuth route handler are all gone.
+- [x] No pre-release dependency remains anywhere in the authentication path.
+- [x] The whole authentication implementation is readable in one sitting, with no adapter contract to consult.
+- [x] The full existing test suite passes, with changes confined to import lines.
+- [x] The migration record shows both the outstanding data migration and the new auth migration applied; the favorites, viewed-constellations, and read-lessons tables exist.
 
 ---
 
@@ -235,9 +235,9 @@ records are all operator actions.
 
 **Blocked by:** None — can run in parallel with everything above.
 
-- [ ] A custom domain is purchased, attached to the project, and verified with Resend's DNS records.
-- [ ] The Resend Marketplace integration is provisioned for Production and Preview only — not Development, so local sign-in keeps logging codes: `vercel integration add resend/resend-email -e production -e preview --no-env-pull -m domain=<domain> -m region=us-east-1`. The product requires an owned domain at provisioning, so this follows the purchase. Confirm the injected name is exactly `RESEND_API_KEY` (no prefix).
-- [ ] The sending address is set as `EMAIL_FROM` (e.g. `Telescope <signin@<domain>>`) for Production, Preview, and Development.
+- [x] A custom domain is purchased, attached to the project, and verified with Resend's DNS records.
+- [x] The Resend Marketplace integration is provisioned for Production and Preview only — not Development, so local sign-in keeps logging codes: `vercel integration add resend/resend-email -e production -e preview --no-env-pull -m domain=<domain> -m region=us-east-1`. The product requires an owned domain at provisioning, so this follows the purchase. Confirm the injected name is exactly `RESEND_API_KEY` (no prefix).
+- [x] The sending address is set as `EMAIL_FROM` (e.g. `Telescope <signin@<domain>>`) for Production, Preview, and Development.
 - [ ] The obsolete Google client id, client secret, auth secret, and SMTP settings are deleted from the preview environment, leaving no unused secrets behind.
 
 ---
