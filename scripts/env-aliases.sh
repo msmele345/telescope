@@ -28,9 +28,22 @@
 # pointed at a retired database unnoticed. Confirm the host with the first
 # line of `npm run db:migrate`. See AGENTS.md › Local database.
 
-# --- Email delivery: leave RESEND_API_KEY unset locally ---------------------
+# --- Email delivery ---------------------------------------------------------
 #
-# With no key set, sign-in codes are written to the dev server log, which is
-# what lets a fresh clone sign in without provisioning any mail service.
-# If the key IS set, lib/auth/delivery.ts refuses to send rather than falling
-# back to the log, so that live sign-in codes never land in a log stream.
+# With RESEND_API_KEY unset, sign-in codes are written to the dev server log,
+# which is what lets a fresh clone sign in without provisioning a mail service.
+#
+# The Resend Marketplace integration is connected to Production and Preview
+# only, so a pull never brings the key here. To try real delivery locally,
+# paste a key from resend.com by hand (and delete it to go back to the log):
+#
+# RESEND_API_KEY="re_..."
+#
+# Until a sending domain is verified, mail goes from Resend's shared sender and
+# reaches ONLY the Resend account owner's address. Once one is verified, set
+# the sender in every Vercel environment:
+#
+# EMAIL_FROM="Telescope <signin@YOUR-DOMAIN>"
+#
+# Outside development a missing key is an error, never a fallback to the log:
+# live sign-in codes must not land in a deployment's log stream.

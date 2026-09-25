@@ -147,6 +147,33 @@ describe("<LoginForm />", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(/30 minutes/i);
   });
 
+  it("says so when the email could not be sent, and stays on email entry", async () => {
+    const user = userEvent.setup();
+    requestCode.mockResolvedValue({ status: "deliveryFailed" });
+    render(<LoginForm />);
+
+    await user.type(screen.getByLabelText(/email address/i), "ada@example.com");
+    await user.click(screen.getByRole("button", { name: /email me a code/i }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /couldn.t send.*try again/i
+    );
+    expect(screen.queryByLabelText(/six-digit code/i)).toBeNull();
+  });
+
+  it("reports a failed resend without leaving code entry", async () => {
+    const user = userEvent.setup();
+    render(<LoginForm />);
+
+    await advanceToCodeEntry(user);
+    requestCode.mockResolvedValue({ status: "deliveryFailed" });
+    await user.click(screen.getByRole("button", { name: /send a new code/i }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/couldn.t send/i);
+    expect(screen.getByLabelText(/six-digit code/i)).toBeInTheDocument();
+    expect(screen.queryByText(/new code is on its way/i)).toBeNull();
+  });
+
   it("reports a wrong code with the attempts remaining", async () => {
     const user = userEvent.setup();
     verifyCode.mockResolvedValue({ status: "wrong", attemptsRemaining: 3 });
