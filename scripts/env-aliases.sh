@@ -47,3 +47,12 @@
 #
 # Outside development a missing key is an error, never a fallback to the log:
 # live sign-in codes must not land in a deployment's log stream.
+
+# --- Lesson drafting --------------------------------------------------------
+#
+# `npm run lessons:draft` reads the Anthropic key from this file and nowhere
+# else; the deployed app makes no model calls, so the key must never be added
+# to a Vercel environment. Create a dedicated key with a small spend limit in
+# the Anthropic Console for the run, and revoke it once the drafts are merged:
+#
+# ANTHROPIC_API_KEY="sk-ant-..."
