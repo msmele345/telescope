@@ -17,6 +17,10 @@ Read these on demand — they are long, so they are not auto-loaded:
   # silently, and it strips comments. env-aliases.sh re-appends the local-setup
   # notes afterwards, which is the only reason they survive a pull.
 - npx vercel --yes # for deploying current branch to vercel preview
+- npm run lessons:draft -- --dry-run  # drafts missing constellation lessons via the Batches API
+  # Manual and one-off; never part of build or deploy. Drop --dry-run to spend money;
+  # --only <slug> drafts one. Needs ANTHROPIC_API_KEY in .env.local only (never Vercel).
+  # State and the review report live in .cache/lesson-drafts/. See plans/v2-lesson-drafts.md.
 
 # Local database
 
