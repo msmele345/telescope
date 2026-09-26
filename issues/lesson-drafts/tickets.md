@@ -39,7 +39,7 @@ boundary, the way component tests stub the auth module.
 - [x] Lessons test: every file in the content folder is named for a real constellation slug.
 - [x] Resolver test (MDX import mocked): a slug whose import succeeds has a lesson; one whose import fails, and a non-constellation slug, do not.
 - [x] The full existing test suite passes; `next build` succeeds.
-- [ ] **Verified on a Vercel preview deploy:** a constellation with a lesson (e.g. Orion) renders it with the lesson description in its metadata, and one without (e.g. Andromeda) shows the fallback.
+- [x] **Verified on a Vercel preview deploy:** a constellation with a lesson (e.g. Orion) renders it with the lesson description in its metadata, and one without (e.g. Andromeda) shows the fallback.
 
 ## 2. Pure lesson-draft module
 
