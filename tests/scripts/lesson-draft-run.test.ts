@@ -117,6 +117,15 @@ describe("readDraftResult", () => {
     const outcome = readDraftResult({ custom_id: "lyra", result: { type } }, ORION_FACTS);
     expect(outcome).toMatchObject({ slug: "lyra", status: type });
   });
+
+  it("reports a result of a kind it does not know as errored, rather than failing the run", () => {
+    const outcome = readDraftResult({ custom_id: "lyra", result: { type: "deferred" } }, ORION_FACTS);
+    expect(outcome).toEqual({
+      slug: "lyra",
+      status: "errored",
+      reasons: [expect.stringMatching(/deferred/)],
+    });
+  });
 });
 
 describe("renderReviewReport", () => {

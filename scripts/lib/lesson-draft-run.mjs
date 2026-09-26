@@ -45,6 +45,10 @@ export function readDraftResult(result, facts) {
       return { slug, status: "expired", reasons: ["The batch ended before this request ran."] };
     case "canceled":
       return { slug, status: "canceled", reasons: ["The batch was canceled before this request ran."] };
+    case "succeeded":
+      break;
+    default:
+      return { slug, status: "errored", reasons: [`Unrecognised result type "${result.result.type}".`] };
   }
 
   const { message } = result.result;

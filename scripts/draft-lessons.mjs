@@ -68,8 +68,7 @@ async function dryRun() {
       `Note: batch ${state.batch.id} is outstanding. A real run would resume it, not submit these.\n`
     );
   }
-  const requests = await buildRequests(plan());
-  if (requests.length === 0) return console.log("Nothing to draft: every constellation has a lesson.");
+  const requests = await plannedRequests();
 
   const { system, messages, ...settings } = requests[0].params;
   console.log("=== Settings, shared by every request ===");
@@ -97,11 +96,19 @@ async function dryRun() {
   console.log("Dry run: no API call made.");
 }
 
-async function submitAndFinish() {
-  const requests = await buildRequests(plan());
-  if (requests.length === 0) return console.log("Nothing to draft: every constellation has a lesson.");
+async function submitAndCollect() {
+  const requests = await plannedRequests();
 
   const client = createClient(await readApiKey());
+
+  // A Ctrl-C after the batch is created but before its id is recorded would
+  // mean paying for it again on the rerun, so an interrupt waits until then.
+  let interrupted = false;
+  const holdInterrupt = () => {
+    interrupted = true;
+    console.log("Recording the submitted batch before stopping…");
+  };
+  process.on("SIGINT", holdInterrupt);
   const batch = await client.messages.batches.create({ requests });
   state.batch = {
     id: batch.id,
@@ -109,25 +116,28 @@ async function submitAndFinish() {
     submittedAt: new Date().toISOString(),
   };
   await writeState();
+  process.off("SIGINT", holdInterrupt);
+
   console.log(`Submitted batch ${batch.id} with ${requests.length} requests.`);
   console.log("Interrupting is safe from here: rerun `npm run lessons:draft` to resume it.");
-  await finish(client, batch.id);
+  if (interrupted) process.exit(130);
+  await collectResults(client, batch.id);
 }
 
-function plan() {
+// One request per constellation to draft. Exits when there is nothing to
+// draft, or when --only names a constellation that cannot be drafted.
+async function plannedRequests() {
+  let slugs;
   try {
-    return planDrafts(
-      CONSTELLATIONS.map((c) => c.slug),
-      lessonSlugsOnDisk,
-      { only: args.only }
-    );
+    slugs = planDrafts(CONSTELLATIONS.map((c) => c.slug), lessonSlugsOnDisk, { only: args.only });
   } catch (err) {
     console.error(err.message);
     process.exit(1);
   }
-}
-
-async function buildRequests(slugs) {
+  if (slugs.length === 0) {
+    console.log("Nothing to draft: every constellation has a lesson.");
+    process.exit(0);
+  }
   const examples = await Promise.all(
     STYLE_EXAMPLE_SLUGS.map(async (slug) => ({ slug, mdx: await readLesson(slug) }))
   );
@@ -135,7 +145,7 @@ async function buildRequests(slugs) {
 }
 
 // Polls until the batch ends, then writes what passed and reports the rest.
-async function finish(client, batchId) {
+async function collectResults(client, batchId) {
   await waitForBatch(client, batchId);
 
   const notWritten = [];
@@ -187,11 +197,11 @@ async function waitForBatch(client, batchId) {
       }
       throw err;
     }
-    const c = batch.request_counts;
+    const counts = batch.request_counts;
     console.log(
       `${new Date().toLocaleTimeString()} ${batch.processing_status}: ` +
-        `${c.processing} processing, ${c.succeeded} succeeded, ${c.errored} errored, ` +
-        `${c.expired} expired, ${c.canceled} canceled`
+        `${counts.processing} processing, ${counts.succeeded} succeeded, ` +
+        `${counts.errored} errored, ${counts.expired} expired, ${counts.canceled} canceled`
     );
     if (batch.processing_status === "ended") return;
     await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
@@ -296,7 +306,7 @@ if (args["dry-run"]) {
 } else if (state.batch) {
   if (args.only) console.log(`Ignoring --only ${args.only}: finishing the outstanding batch first.`);
   console.log(`Resuming batch ${state.batch.id} (${state.batch.slugs.length} requests).`);
-  await finish(createClient(await readApiKey()), state.batch.id);
+  await collectResults(createClient(await readApiKey()), state.batch.id);
 } else {
-  await submitAndFinish();
+  await submitAndCollect();
 }
