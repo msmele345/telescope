@@ -5,8 +5,7 @@ import {
   CONSTELLATIONS,
   getConstellationBySlug,
 } from "@/lib/constellation";
-import { hasLesson } from "@/lib/constellation/lessons";
-import { getLessonComponent } from "@/lib/constellation/lessonComponents";
+import { hasLesson, loadLesson } from "@/lib/constellation/lessons";
 import { getConstellationMembers } from "@/lib/constellation/server";
 import ConstellationContent from "@/components/ConstellationContent";
 import ConstellationActions from "@/components/user/ConstellationActions";
@@ -26,10 +25,12 @@ export function generateStaticParams() {
   return CONSTELLATIONS.map((c) => ({ slug: c.slug }));
 }
 
-export function generateMetadata({ params }: PageProps): Metadata {
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
   const c = getConstellationBySlug(params.slug);
   if (!c) return { title: "Constellation — Telescope" };
-  const description = hasLesson(c.slug)
+  const description = (await hasLesson(c.slug))
     ? `Mythology and lessons for the ${c.name} constellation.`
     : `${c.name} — coming soon to Telescope.`;
   return {
@@ -42,7 +43,7 @@ export default async function ConstellationPage({ params }: PageProps) {
   const c = getConstellationBySlug(params.slug);
   if (!c) notFound();
 
-  const Lesson = getLessonComponent(c.slug);
+  const Lesson = await loadLesson(c.slug);
   const [members, session] = await Promise.all([
     Lesson ? null : getConstellationMembers(c.abbr),
     auth(),
