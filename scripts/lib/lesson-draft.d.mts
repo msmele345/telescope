@@ -3,13 +3,6 @@ import type { Star } from "../../lib/star-catalog/types";
 
 /** IAU abbreviations of Ptolemy's 48, with Argo Navis as Carina, Puppis and Vela. */
 export declare const CLASSICAL_CONSTELLATIONS: ReadonlySet<string>;
-export declare const BRIGHTEST_COUNT: number;
-export declare const EQUATORIAL_BAND_DEG: number;
-export declare const DISTANCE_TOLERANCE: number;
-export declare const MIN_LESSON_LINES: number;
-export declare const MAX_LESSON_LINES: number;
-export declare const LESSON_MODEL: string;
-export declare const LESSON_MAX_TOKENS: number;
 export declare const STYLE_EXAMPLE_SLUGS: string[];
 
 export type StorySection = "Mythology" | "History";

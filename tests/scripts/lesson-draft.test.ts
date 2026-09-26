@@ -230,6 +230,28 @@ describe("checkLessonDraft — structure", () => {
     expect(result.verdict).toBe("clean");
   });
 
+  it("rejects anything before the first section: a preamble, a title or a code fence", () => {
+    for (const before of ["Here is the lesson:", "# Orion", "```mdx"]) {
+      const result = checkLessonDraft(`${before}\n\n${draft()}`, ORION_FACTS);
+      expect(result.verdict).toBe("rejected");
+      expect(result.rejections.join()).toMatch(/before the first section/i);
+    }
+  });
+
+  it("rejects a code fence anywhere in the draft", () => {
+    const result = checkLessonDraft(`${draft()}\n\`\`\`\n`, ORION_FACTS);
+    expect(result.verdict).toBe("rejected");
+    expect(result.rejections.join()).toMatch(/code fence/i);
+  });
+
+  it("reads every section heading regardless of case", () => {
+    const result = checkLessonDraft(
+      draft({ story: "## mythology", find: "## How To Find It" }),
+      ORION_FACTS
+    );
+    expect(result.verdict).toBe("clean");
+  });
+
   it("rejects a wildly short or wildly long draft", () => {
     const short = "## The Hunter\n\nx\n\n## Mythology\n\nx\n\n## Notable stars\n\nx\n\n## How to find it\n\nx\n";
     const long = draft({ findBody: Array(50).fill("More prose.").join("\n") });
@@ -318,6 +340,47 @@ describe("checkLessonDraft — facts", () => {
     );
     expect(ok.flags).toEqual([]);
     expect(wrong.flags).toEqual([expect.stringMatching(/magnitude 3\.4.*Orion Nebula/)]);
+  });
+
+  it("catches distances and magnitudes however they are worded", () => {
+    for (const [line, flagged] of [
+      ["M42 lies 2.5 million light-years away.", /2\.5 million light-years/],
+      ["A 770-light-year trip.", /770-light-year/],
+      ["Rigel shines at magnitude +3.9.", /\+3\.9/],
+      ["Its companions are magnitudes 0.12 and 8.8.", /8\.8/],
+      ["A 3.9-magnitude star.", /3\.9-magnitude/],
+    ] as const) {
+      const result = checkLessonDraft(withProse(line), ORION_FACTS);
+      expect(result.flags, line).toEqual([expect.stringMatching(flagged)]);
+    }
+  });
+
+  it("reads Messier ids written out in full", () => {
+    const result = checkLessonDraft(withProse("Nearby is Messier 78."), ORION_FACTS);
+    expect(result.flags).toEqual([expect.stringMatching(/M78/)]);
+  });
+
+  it("does not mistake a spectral type for a Messier id", () => {
+    for (const line of ["A red supergiant of spectral type M1.", "An M2 Iab supergiant.", "It is class M3 III."]) {
+      expect(checkLessonDraft(withProse(line), ORION_FACTS).flags, line).toEqual([]);
+    }
+  });
+
+  it("does not treat an asterism or an abbreviated name as an unknown star", () => {
+    const notableBody = [
+      "- **Orion's Belt** — three stars in a row.",
+      "- **Sword of Orion** — hangs from the belt.",
+      "- **Trapezium** — four young stars.",
+      "- **Messier 42** — a stellar nursery.",
+      "- **α Ori** — Betelgeuse by its Bayer letter.",
+      "- **Eta Ori** — the same, spelled out.",
+    ].join("\n");
+    expect(checkLessonDraft(draft({ notableBody }), ORION_FACTS).flags).toEqual([]);
+  });
+
+  it("flags a notable star named after someone that the fact sheet lacks", () => {
+    const result = checkLessonDraft(draft({ notableBody: "- **Barnard's Star** — nearby." }), ORION_FACTS);
+    expect(result.flags).toEqual([expect.stringMatching(/Barnard's Star/)]);
   });
 
   it("flags a Messier object the fact sheet does not list", () => {

@@ -19,7 +19,7 @@ export const CLASSICAL_CONSTELLATIONS = new Set([
 
 // How many of the brightest members the fact sheet lists in full. Fainter
 // members still appear when they have a proper name (Alcor, the Pleiades).
-export const BRIGHTEST_COUNT = 8;
+const BRIGHTEST_COUNT = 8;
 
 export function buildLessonFacts(abbr, stars, messier) {
   const meta = getConstellationByAbbr(abbr);
@@ -67,7 +67,7 @@ const RAD_TO_HOURS = 12 / Math.PI;
 
 // Constellations centred within this many degrees of the celestial equator
 // are well placed from both hemispheres.
-export const EQUATORIAL_BAND_DEG = 15;
+const EQUATORIAL_BAND_DEG = 15;
 
 // The mean position of the member stars. Right ascension is averaged as an
 // angle — summing unit vectors — so a constellation spanning 23h and 1h is
@@ -121,8 +121,8 @@ function seasonOf(raHours) {
 // ---------------------------------------------------------------------------
 // Fact sheet as text, and the batch request that carries it.
 
-export const LESSON_MODEL = "claude-opus-5";
-export const LESSON_MAX_TOKENS = 8000;
+const LESSON_MODEL = "claude-opus-5";
+const LESSON_MAX_TOKENS = 8000;
 
 // Three handwritten lessons chosen for variety: famous with rich mythology,
 // northern and circumpolar, and faint and modest.
@@ -229,12 +229,10 @@ export function buildLessonRequest(facts, examples) {
 
 // The handwritten lessons run 33–42 lines; this band is deliberately wide so
 // that a short honest lesson passes and only a broken one is rejected.
-export const MIN_LESSON_LINES = 20;
-export const MAX_LESSON_LINES = 60;
+const MIN_LESSON_LINES = 20;
+const MAX_LESSON_LINES = 60;
 
-const NOTABLE_HEADING = /^Notable stars\b/i;
-const FIND_HEADING = /^How to find it$/i;
-const STORY_HEADINGS = new Set(["Mythology", "History"]);
+const HEADING = /^##\s+(.+?)\s*$/;
 const SECTION_ORDER = ["epithet", "story", "notable", "find"];
 const SECTION_LABEL = {
   epithet: "an epithet heading (e.g. \"The Hunter\")",
@@ -255,20 +253,32 @@ export function checkLessonDraft(mdx, facts) {
 
 function structuralProblems(mdx, facts) {
   const problems = [];
+  const lines = mdx.trimEnd().split("\n");
+
+  // The draft is written to disk as-is, so anything above the first section —
+  // frontmatter, a "Here is the lesson" preamble, a title, an opening code
+  // fence — would render on the page.
+  const firstHeading = lines.findIndex((l) => HEADING.test(l));
+  const preamble = lines.slice(0, firstHeading === -1 ? lines.length : firstHeading);
   if (mdx.trimStart().startsWith("---")) {
     problems.push("Has frontmatter; lessons carry none.");
+  } else if (preamble.some((l) => l.trim() !== "")) {
+    problems.push("Has text before the first section (a preamble, title or code fence).");
+  }
+  if (lines.some((l) => l.trimStart().startsWith("```"))) {
+    problems.push("Contains a code fence.");
   }
 
-  const sections = sectionsOf(mdx);
+  const sections = headingsOf(lines);
   const kinds = sections.map((s) => s.kind);
 
   const story = sections.find((s) => s.kind === "story");
   if (!story) {
     problems.push(`Missing the ${facts.storySection} section.`);
-  } else if (story.heading !== facts.storySection) {
+  } else if (story.heading.toLowerCase() !== facts.storySection.toLowerCase()) {
     problems.push(`Has a ${story.heading} section where the fact sheet calls for ${facts.storySection}.`);
   }
-  for (const kind of ["epithet", "notable", "find"]) {
+  for (const kind of SECTION_ORDER.filter((k) => k !== "story")) {
     if (!kinds.includes(kind)) problems.push(`Missing the ${SECTION_LABEL[kind]} section.`);
   }
 
@@ -283,48 +293,55 @@ function structuralProblems(mdx, facts) {
     );
   }
 
-  const lines = mdx.trimEnd().split("\n").length;
-  if (lines < MIN_LESSON_LINES || lines > MAX_LESSON_LINES) {
+  if (lines.length < MIN_LESSON_LINES || lines.length > MAX_LESSON_LINES) {
     problems.push(
-      `Is ${lines} lines long; expected roughly ${MIN_LESSON_LINES}–${MAX_LESSON_LINES}.`
+      `Is ${lines.length} lines long; expected roughly ${MIN_LESSON_LINES}–${MAX_LESSON_LINES}.`
     );
   }
   return problems;
 }
 
-// Every `##` section with its heading, body, and which of the four it is. The
-// epithet is whichever section is none of the other three.
-function sectionsOf(mdx) {
-  const sections = [];
-  let current = null;
-  for (const line of mdx.split("\n")) {
-    const match = /^##\s+(.+?)\s*$/.exec(line);
-    if (match) {
-      current = { heading: match[1], kind: kindOf(match[1]), body: [] };
-      sections.push(current);
-    } else if (current) {
-      current.body.push(line);
-    }
-  }
-  return sections.map((s) => ({ ...s, body: s.body.join("\n") }));
+// Every `##` heading and which of the four sections it is. The epithet is
+// whichever section is none of the other three.
+function headingsOf(lines) {
+  return lines.flatMap((line) => {
+    const match = HEADING.exec(line);
+    return match ? [{ heading: match[1], kind: kindOf(match[1]) }] : [];
+  });
 }
 
 function kindOf(heading) {
-  if (STORY_HEADINGS.has(heading)) return "story";
-  if (NOTABLE_HEADING.test(heading)) return "notable";
-  if (FIND_HEADING.test(heading)) return "find";
+  const h = heading.toLowerCase();
+  if (h === "mythology" || h === "history") return "story";
+  if (/^notable stars\b/.test(h)) return "notable";
+  if (h === "how to find it") return "find";
   return "epithet";
 }
 
 // A quoted distance matches when it is within 5% of a listed distance: that is
 // the most two-significant-figure rounding can move a value ("about 860
 // light-years", "some 1,300 light-years").
-export const DISTANCE_TOLERANCE = 0.05;
+const DISTANCE_TOLERANCE = 0.05;
+const SCALE = { thousand: 1e3, million: 1e6, billion: 1e9 };
 
-const DISTANCE_PATTERN = /(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)\s*(?:light[- ]years?|ly)\b/gi;
-const MAGNITUDE_PATTERN =
-  /\bmag(?:nitude)?\.?\s+(?:of\s+)?(?:about\s+|around\s+|roughly\s+|nearly\s+|just\s+)?([-−]?\d+(?:\.\d+)?)/gi;
-const MESSIER_PATTERN = /\bM\s?(\d{1,3})\b/g;
+const NUMBER = String.raw`\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?`;
+const SIGNED = String.raw`[+\-−–]?\d+(?:\.\d+)?`;
+const LIST_SEPARATOR = String.raw`\s*,\s*(?:and\s+)?|\s+(?:and|or|to)\s+|\s*[–-]\s*`;
+
+// "860 light-years", "2.5 million light-years", "a 770-light-year trip".
+const DISTANCE_PATTERN = new RegExp(
+  String.raw`(${NUMBER})(?:\s+(thousand|million|billion))?(?:\s*|-)(?:light[- ]years?|ly)\b`,
+  "gi"
+);
+// "magnitude 2.1", "magnitude of about +3.4", "magnitudes 9 and 10".
+const MAGNITUDE_AFTER = new RegExp(
+  String.raw`\bmag(?:nitude)?s?\.?\s+(?:of\s+)?(?:(?:about|around|roughly|nearly|just|only)\s+)?` +
+    String.raw`(${SIGNED}(?:(?:${LIST_SEPARATOR})\d+(?:\.\d+)?)*)`,
+  "gi"
+);
+// "a 3.9-magnitude star".
+const MAGNITUDE_BEFORE = new RegExp(String.raw`(${SIGNED})[\s-]magnitude\b`, "gi");
+const MESSIER_PATTERN = /\b(?:M\s?|Messier\s+)(\d{1,3})\b/g;
 const BULLET = /^\s*[-*]\s+/;
 const BULLET_LEAD = /^\s*[-*]\s+\*\*(.+?)\*\*/;
 
@@ -338,26 +355,27 @@ function factFlags(mdx, facts) {
   const flags = [];
   for (const scope of claimScopes(mdx)) {
     const names = scope.lead ? namesInLead(scope.lead) : [];
-    const stars = names.flatMap((n) => starsByName.get(normalizeName(n)) ?? []);
-    const objects = names.flatMap((n) => objectsByName.get(normalizeName(n)) ?? []);
-    const subjects = stars.length + objects.length > 0 ? [...stars, ...objects] : allSubjects;
-    const about = subjects === allSubjects ? "" : ` for ${names.join(" and ")}`;
-
+    const named = [];
     for (const name of names) {
-      const key = normalizeName(name);
-      if (!starsByName.has(key) && !objectsByName.has(key)) {
-        flags.push(`"${name}" is not named in the fact sheet.`);
-      }
+      const key = normalizeName(name.replace(/^the\s+/i, ""));
+      const found = [...(starsByName.get(key) ?? []), ...(objectsByName.get(key) ?? [])];
+      if (found.length > 0) named.push(...found);
+      else if (!isAsterism(name)) flags.push(`"${name}" is not named in the fact sheet.`);
     }
+    const attributed = named.length > 0;
+    const subjects = attributed ? named : allSubjects;
+    const about = attributed ? ` for ${names.join(" and ")}` : "";
+
     for (const match of scope.text.matchAll(DISTANCE_PATTERN)) {
-      const quoted = Number(match[1].replace(/,/g, ""));
+      const scale = match[2] ? SCALE[match[2].toLowerCase()] : 1;
+      const quoted = Number(match[1].replace(/,/g, "")) * scale;
       if (!subjects.some((s) => distanceMatches(quoted, s.distLy))) {
         flags.push(`Distance "${match[0]}"${about} matches no distance in the fact sheet.`);
       }
     }
-    for (const match of scope.text.matchAll(MAGNITUDE_PATTERN)) {
-      if (!subjects.some((o) => magnitudeMatches(match[1], o.mag))) {
-        flags.push(`Magnitude "${match[0]}"${about} matches no magnitude in the fact sheet.`);
+    for (const { value, phrase } of quotedMagnitudes(scope.text)) {
+      if (!subjects.some((o) => magnitudeMatches(value, o.mag))) {
+        flags.push(`Magnitude ${value} in "${phrase}"${about} matches no magnitude in the fact sheet.`);
       }
     }
   }
@@ -365,9 +383,36 @@ function factFlags(mdx, facts) {
   const listed = new Set(facts.messier.map((o) => o.id));
   for (const match of mdx.matchAll(MESSIER_PATTERN)) {
     const id = `M${match[1]}`;
-    if (!listed.has(id)) flags.push(`Messier object ${id} is not in the fact sheet.`);
+    if (!listed.has(id) && !isSpectralType(mdx, match)) {
+      flags.push(`Messier object ${id} is not in the fact sheet.`);
+    }
   }
   return flags;
+}
+
+// Each magnitude as written, sign included. In a list ("magnitudes 9–10") only
+// the first number can carry a sign; a later dash is a separator.
+function quotedMagnitudes(text) {
+  const quoted = [];
+  for (const match of text.matchAll(MAGNITUDE_AFTER)) {
+    const [first, ...rest] = match[1].match(/[+\-−–]?\d+(?:\.\d+)?/g);
+    for (const value of [first, ...rest.map((n) => n.replace(/^[+\-−–]/, ""))]) {
+      quoted.push({ value, phrase: match[0] });
+    }
+  }
+  for (const match of text.matchAll(MAGNITUDE_BEFORE)) {
+    quoted.push({ value: match[1], phrase: match[0] });
+  }
+  return quoted;
+}
+
+// Red giants are spectral type M, so "type M1" or "an M2 Iab supergiant" is
+// not a Messier id.
+function isSpectralType(text, match) {
+  if (match[0].startsWith("Messier")) return false;
+  const before = text.slice(Math.max(0, match.index - 20), match.index);
+  const after = text.slice(match.index + match[0].length);
+  return /\b(?:type|class)\s+$/i.test(before) || /^(?:\.\d|\s?(?:I{1,3}|IV|V|Ia|Iab|Ib)\b)/.test(after);
 }
 
 // Messier objects carry no distance, so a distance quoted for one never matches.
@@ -379,7 +424,7 @@ function distanceMatches(quoted, distLy) {
 // A quoted magnitude matches when it is a listed magnitude rounded to the
 // number of decimals it is quoted with ("magnitude 2" for 2.06).
 function magnitudeMatches(text, mag) {
-  const normalized = text.replace("−", "-");
+  const normalized = text.replace(/^[−–]/, "-");
   const decimals = normalized.split(".")[1]?.length ?? 0;
   return Math.abs(Number(normalized) - mag) <= 0.5 * 10 ** -decimals + 1e-9;
 }
@@ -393,7 +438,7 @@ function claimScopes(mdx) {
   let inNotable = false;
   let bullet = null;
   for (const line of mdx.split("\n")) {
-    const heading = /^##\s+(.+?)\s*$/.exec(line);
+    const heading = HEADING.exec(line);
     if (heading) {
       inNotable = kindOf(heading[1]) === "notable";
       bullet = null;
@@ -414,17 +459,26 @@ function claimScopes(mdx) {
   ];
 }
 
+// Words that mark a bullet lead as an asterism or deep-sky object rather than
+// a single star: "Orion's Belt", "Sword of Orion", "Trapezium".
+const NOT_A_STAR = /\b(?:belt|sword|clusters?|nebula|galaxy|trapezium|asterism|dipper|sickle|teapot|square|keystone|cross|triangle|core|eyes|stream|arc|circlet|kids|kite|horns)\b/i;
+
 // Star names are checked where a lesson makes its claims about them: the bold
-// lead of each Notable stars bullet. Leads starting with "The" name asterisms
-// and objects (The Belt, The Pleiades), not stars. Stars named in passing
-// elsewhere — neighbours used for star-hopping, like Sirius from Orion's belt —
-// are not checked.
+// lead of each Notable stars bullet. Stars named in passing elsewhere —
+// neighbours used for star-hopping, like Sirius from Orion's belt — are not
+// checked.
 function namesInLead(lead) {
   return lead
     .replace(/\(.*?\)/g, "")
     .split(/,|\s+and\s+|\s*&\s*|\//)
     .map((s) => s.trim())
-    .filter((s) => s && !/^the\s/i.test(s));
+    .filter(Boolean);
+}
+
+// A lead the fact sheet does not know is only a star-name claim when it reads
+// like one: leads starting with "The" or naming an asterism are not.
+function isAsterism(name) {
+  return /^the\s/i.test(name) || NOT_A_STAR.test(name);
 }
 
 const GREEK_LETTER_NAMES = {
@@ -435,8 +489,8 @@ const GREEK_LETTER_NAMES = {
 };
 
 // Every way a draft may name a fact-sheet star — proper name, Bayer letter
-// ("η Orionis"), or Bayer letter spelled out ("Eta Orionis") — mapped to the
-// stars it can mean. Some names cover several catalog rows (Castor, Mizar).
+// ("η Orionis", "η Ori"), or Bayer letter spelled out ("Eta Orionis") — mapped
+// to the stars it can mean. Some names cover several catalog rows (Castor).
 function starLookup(facts) {
   const lookup = new Map();
   const add = (name, star) => {
@@ -446,20 +500,23 @@ function starLookup(facts) {
   };
   for (const s of allStars(facts)) {
     add(s.designation, s);
-    if (s.bayer) {
-      const plain = s.bayer.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, "");
-      add(plain, s);
-      const letter = GREEK_LETTER_NAMES[plain[0]];
-      if (letter) add(letter + plain.slice(1), s);
+    if (!s.bayer) continue;
+    add(s.bayer, s);
+    const letter = s.bayer.slice(0, s.bayer.indexOf(" ")).replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, "");
+    for (const spelling of [letter, GREEK_LETTER_NAMES[letter]]) {
+      if (!spelling) continue;
+      add(`${spelling} ${facts.genitive}`, s);
+      add(`${spelling} ${facts.abbr}`, s);
     }
   }
   return lookup;
 }
 
+// Messier objects by id ("M42"), id written out ("Messier 42"), and name.
 function messierLookup(facts) {
   const lookup = new Map();
   for (const o of facts.messier) {
-    for (const name of [o.id, o.name]) {
+    for (const name of [o.id, o.id.replace(/^M/, "Messier "), o.name]) {
       if (name) lookup.set(normalizeName(name), [o]);
     }
   }
