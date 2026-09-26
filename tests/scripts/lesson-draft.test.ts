@@ -391,23 +391,31 @@ describe("checkLessonDraft — facts", () => {
 });
 
 // The calibration check on the rules themselves: a rule that flags a lesson
-// written by hand is a wrong rule.
-describe("checkLessonDraft — the handwritten lessons", () => {
-  const contentDir = path.join(process.cwd(), "content", "constellations");
-  const lessons = readdirSync(contentDir).filter((f) => f.endsWith(".mdx"));
+// written by hand is a wrong rule. Drafts merged later only have to pass the
+// structure — their flags are for the reviewer, not the test suite.
+const HANDWRITTEN_LESSONS = [
+  "aquarius", "aries", "cancer", "capricornus", "gemini", "leo", "libra", "orion",
+  "pisces", "sagittarius", "scorpius", "taurus", "ursa-major", "ursa-minor", "virgo",
+];
+const CONTENT_DIR = path.join(process.cwd(), "content", "constellations");
 
-  it("finds the handwritten lessons", () => {
-    expect(lessons.length).toBeGreaterThanOrEqual(15);
+function checkLessonFile(slug: string) {
+  const constellation = getConstellationBySlug(slug)!;
+  const mdx = readFileSync(path.join(CONTENT_DIR, `${slug}.mdx`), "utf8");
+  return checkLessonDraft(mdx, catalogFacts(constellation.abbr));
+}
+
+describe("checkLessonDraft — the lessons in the content folder", () => {
+  it.each(HANDWRITTEN_LESSONS)("handwritten %s passes cleanly against its own fact sheet", (slug) => {
+    expect(checkLessonFile(slug)).toEqual({ verdict: "clean", rejections: [], flags: [] });
   });
 
-  it.each(lessons)("%s passes cleanly against its own fact sheet", (file) => {
-    const constellation = getConstellationBySlug(file.replace(/\.mdx$/, ""))!;
-    const mdx = readFileSync(path.join(contentDir, file), "utf8");
-    expect(checkLessonDraft(mdx, catalogFacts(constellation.abbr))).toEqual({
-      verdict: "clean",
-      rejections: [],
-      flags: [],
-    });
+  const allLessons = readdirSync(CONTENT_DIR)
+    .filter((f) => f.endsWith(".mdx"))
+    .map((f) => f.replace(/\.mdx$/, ""));
+
+  it.each(allLessons)("%s has the lesson structure", (slug) => {
+    expect(checkLessonFile(slug).rejections).toEqual([]);
   });
 });
 
