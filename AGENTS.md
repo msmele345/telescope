@@ -51,6 +51,7 @@ that co-tenancy is known and intended.
 1. TDD on any new feature code or bug fixes. Use Test Driven Development whenever possible. See the /tdd skill.
 2. Red green refactor. Reference the tdd skill and follow it.
 3. Always check off tracer bullet boxes in issues or tickets worked when finished to verify competion.
+4. When looking for skills, always check .agents/skills first. 
 
 # Git Strategy and Instructions
 - Create feature branches off of develop for each new feature or task. Name branches using the format `feat/short-description` (e.g., `feat/spotify-integration`).

@@ -12,9 +12,9 @@ is not the owner's, against the real sending domain.
 **Blocked by:** #3 Return to where you were after signing in; #4 Send codes through Resend; #5
 Provision Resend and configure every environment.
 
-- [ ] A non-owner address receives a code in Production and completes sign-in.
-- [ ] That account can favorite and unfavorite a star and a constellation, and the state survives a reload.
-- [ ] That account can mark a constellation viewed and a lesson read.
+- [X] A non-owner address receives a code in Production and completes sign-in.
+- [X] That account can favorite and unfavorite a star and a constellation, and the state survives a reload.
+- [X] That account can mark a constellation viewed and a lesson read.
 - [ ] Signing in from a constellation page in Production returns the visitor to that page.
 - [ ] The profile page shows the favorites, viewed constellations, and read lessons for that account.
-- [ ] Signing out in Production ends the session, and the session cannot be restored afterwards.
+- [X] Signing out in Production ends the session, and the session cannot be restored afterwards.
