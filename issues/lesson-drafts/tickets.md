@@ -66,15 +66,15 @@ user-facing ships here; this is what the script plumbs into.
 
 **Blocked by:** None — can start immediately.
 
-- [ ] Fact sheet: brightest members in magnitude order; all and only the constellation's own Messier objects; correct season and hemisphere for a northern, a southern and an equatorial constellation.
-- [ ] Fact sheet: handles a constellation with no named stars and one with no Messier objects.
-- [ ] Fact sheet: marks a modern constellation for History and a classical one for Mythology, including all three Argo Navis constellations.
-- [ ] Request: carries the fact sheet and all three style examples; names the constellation; uses the slug as custom id; shared prefix identical across two constellations.
-- [ ] Checks: frontmatter, a missing section, sections out of order, the wrong heading, and a wildly wrong length each reject.
-- [ ] Checks: an invented distance, an invented magnitude, an unknown star name and an unknown Messier id each flag; a legitimately rounded value ("about 860 light-years") does not.
-- [ ] Fact sheet: the classical list has exactly 50 entries; a constellation straddling 0h right ascension (e.g. Andromeda, Pisces) gets the right season.
-- [ ] Request: effort is medium.
-- [ ] **Calibration: every one of the 15 handwritten lessons passes cleanly against its own fact sheet.** Where a lesson genuinely disagrees with the catalog, correct it by hand and say in the PR which source won.
+- [x] Fact sheet: brightest members in magnitude order; all and only the constellation's own Messier objects; correct season and hemisphere for a northern, a southern and an equatorial constellation.
+- [x] Fact sheet: handles a constellation with no named stars and one with no Messier objects.
+- [x] Fact sheet: marks a modern constellation for History and a classical one for Mythology, including all three Argo Navis constellations.
+- [x] Request: carries the fact sheet and all three style examples; names the constellation; uses the slug as custom id; shared prefix identical across two constellations.
+- [x] Checks: frontmatter, a missing section, sections out of order, the wrong heading, and a wildly wrong length each reject.
+- [x] Checks: an invented distance, an invented magnitude, an unknown star name and an unknown Messier id each flag; a legitimately rounded value ("about 860 light-years") does not.
+- [x] Fact sheet: the classical list has exactly 50 entries; a constellation straddling 0h right ascension (e.g. Andromeda, Pisces) gets the right season.
+- [x] Request: effort is medium.
+- [x] **Calibration: every one of the 15 handwritten lessons passes cleanly against its own fact sheet.** Where a lesson genuinely disagrees with the catalog, correct it by hand and say in the PR which source won.
 
 ## 3. The drafting script
 
