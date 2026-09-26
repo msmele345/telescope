@@ -1,34 +1,32 @@
+import type { ComponentType } from "react";
+import { getConstellationBySlug } from "./meta";
+import { importLessonModule } from "./lessonModule";
+
 /**
- * Slugs of constellations with authored mythology/lesson MDX content.
- * Kept as a pure list so it can be imported without pulling in MDX modules
- * (which need a build-time MDX loader to compile).
+ * A constellation has a lesson exactly when its MDX file exists in
+ * `content/constellations/`. A failed import means "no lesson".
  */
-export const AUTHORED_SLUGS = [
-  "aquarius",
-  "aries",
-  "cancer",
-  "capricornus",
-  "gemini",
-  "leo",
-  "libra",
-  "orion",
-  "pisces",
-  "sagittarius",
-  "scorpius",
-  "taurus",
-  "ursa-major",
-  "ursa-minor",
-  "virgo",
-] as const;
-
-export type AuthoredSlug = (typeof AUTHORED_SLUGS)[number];
-
-const AUTHORED_SET = new Set<string>(AUTHORED_SLUGS);
-
-export function hasLesson(slug: string): boolean {
-  return AUTHORED_SET.has(slug);
+export async function loadLesson(slug: string): Promise<ComponentType | null> {
+  // Only real constellation slugs reach the import.
+  if (!getConstellationBySlug(slug)) return null;
+  try {
+    const mod = await importLessonModule(slug);
+    return mod.default;
+  } catch (err) {
+    // Not-found is the ordinary "no lesson" case. Anything else is a fault
+    // (e.g. a chunk missing from the deployed bundle) that would otherwise
+    // silently turn a lesson into "coming soon".
+    if (!isModuleNotFound(err)) {
+      console.error(`Failed to load the lesson for "${slug}"`, err);
+    }
+    return null;
+  }
 }
 
-export function authoredSlugs(): string[] {
-  return [...AUTHORED_SLUGS];
+export async function hasLesson(slug: string): Promise<boolean> {
+  return (await loadLesson(slug)) !== null;
+}
+
+function isModuleNotFound(err: unknown): boolean {
+  return (err as { code?: unknown } | null)?.code === "MODULE_NOT_FOUND";
 }
