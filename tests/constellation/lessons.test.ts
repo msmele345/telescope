@@ -17,6 +17,13 @@ const CONTENT_DIR = path.resolve(__dirname, "../../content/constellations");
 
 const OrionLesson: ComponentType = () => null;
 
+// What webpack's context module throws for a slug with no lesson file.
+function moduleNotFound(slug: string) {
+  return Object.assign(new Error(`Cannot find module './${slug}.mdx'`), {
+    code: "MODULE_NOT_FOUND",
+  });
+}
+
 describe("constellation/lessons", () => {
   describe("the content folder", () => {
     // Reading the folder is fine in tests; the runtime never does this.
@@ -43,7 +50,7 @@ describe("constellation/lessons", () => {
       vi.mocked(importLessonModule).mockReset();
       vi.mocked(importLessonModule).mockImplementation(async (slug) => {
         if (slug === "orion") return { default: OrionLesson };
-        throw new Error(`Cannot find module './${slug}.mdx'`);
+        throw moduleNotFound(slug);
       });
     });
 
@@ -55,6 +62,28 @@ describe("constellation/lessons", () => {
     it("reports no lesson for a constellation whose import fails", async () => {
       expect(await loadLesson("andromeda")).toBeNull();
       expect(await hasLesson("andromeda")).toBe(false);
+    });
+
+    it("reports no lesson quietly when the constellation has no lesson file", async () => {
+      const log = vi.spyOn(console, "error").mockImplementation(() => {});
+      await loadLesson("andromeda");
+      expect(log).not.toHaveBeenCalled();
+      log.mockRestore();
+    });
+
+    it("reports no lesson but logs the error when an import fails for another reason", async () => {
+      // e.g. a lesson's compiled chunk missing from the deployed bundle —
+      // without the log, every page would silently show "coming soon".
+      const failure = new Error("Loading chunk 14 failed");
+      vi.mocked(importLessonModule).mockRejectedValueOnce(failure);
+      const log = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      expect(await loadLesson("orion")).toBeNull();
+      expect(log).toHaveBeenCalledWith(
+        expect.stringContaining("orion"),
+        failure
+      );
+      log.mockRestore();
     });
 
     it("reports no lesson for a slug that is not a constellation, without importing", async () => {
