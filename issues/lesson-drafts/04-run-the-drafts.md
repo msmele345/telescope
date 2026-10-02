@@ -17,7 +17,7 @@ seven review branches.
 - [x] All 73 drafts written (after retries), with a review report.
 - [x] Total spend recorded, and under $5.
 - [x] Seven branches exist, each containing only its group's lesson files.
-- [ ] The dedicated key is revoked after the last review PR merges.
+- [x] The dedicated key is revoked after the last review PR merges.
 
 ## Run record (2026-10-01)
 

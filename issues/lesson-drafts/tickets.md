@@ -134,10 +134,10 @@ accuracy and tone. Merging makes these lessons live.
 
 **Blocked by:** 4. Run the drafts.
 
-- [ ] Every flag in the group's report is resolved (corrected or confirmed correct).
-- [ ] Each lesson has been read in full; mythology/history claims checked.
-- [ ] Each lesson renders on its constellation page, and the mark-read control works.
-- [ ] PR contains lesson files only.
+- [x] Every flag in the group's report is resolved (corrected or confirmed correct).
+- [x] Each lesson has been read in full; mythology/history claims checked.
+- [x] Each lesson renders on its constellation page, and the mark-read control works.
+- [x] PR contains lesson files only. (See the review record in `05-review-lessons-group-a.md`.)
 
 ## 6. Review lessons — group B
 
@@ -211,3 +211,23 @@ Triangulum, Triangulum Australe, Tucana, Vela, Volans, Vulpecula. Same review ba
 - [ ] Each lesson has been read in full; mythology/history claims checked.
 - [ ] Each lesson renders on its constellation page, and the mark-read control works.
 - [ ] PR contains lesson files only.
+
+## 12. Fix the Cor Caroli star name in the catalog
+
+**What to build:** A follow-up from ticket 5. The source catalog names both β CVn (really Chara)
+and α² CVn (really Cor Caroli) "Chara", and `scripts/fetch-bsc.mjs` copies that through, so the
+star popup, search and the lesson fact sheet all call Cor Caroli "Chara" — while the corrected
+Canes Venatici lesson does not. Add a curated name correction to the catalog build, keyed by HR
+number like `CURATED_DISTANCES`, as a tested pure helper, then regenerate
+`public/data/bsc5.json`. Full detail, and the scope decision on two similar duplicates, in
+`12-fix-cor-caroli-star-name.md`.
+
+**Blocked by:** None — can start immediately. Independent of review tickets 6–11.
+
+- [ ] HR 4915 (α² CVn) is named "Cor Caroli" in `public/data/bsc5.json`; HR 4785 (β CVn) is still "Chara".
+- [ ] The correction lives in the build (a tested pure helper used by `fetch-bsc.mjs`), so rerunning `npm run data:fetch:bsc` keeps it.
+- [ ] Test: the helper returns the curated name for a corrected HR number and the source name unchanged for every other star, including one with no name.
+- [ ] The regenerated `bsc5.json` differs from the committed one only in the intended names — no positions, magnitudes or distances move.
+- [ ] The star popup titles the star "Cor Caroli", and searching "Cor Caroli" finds it.
+- [ ] `checkLessonDraft` on `content/constellations/canes-venatici.mdx` no longer flags "Cor Caroli".
+- [ ] The full test suite passes; `next build` succeeds.
