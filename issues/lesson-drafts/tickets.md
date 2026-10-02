@@ -97,14 +97,14 @@ through the Message Batches API, and writes the drafts that pass the structural 
 
 **Blocked by:** 1. Discover lessons from the content folder; 2. Pure lesson-draft module.
 
-- [ ] `--dry-run` prints 73 requests and a token estimate and makes no API call.
-- [ ] `--only <slug>` against a real key drafts one constellation end to end (a few cents), and the draft renders on its constellation page in local dev.
-- [ ] Rerunning with a lesson file already present skips it; the 15 handwritten lessons are never touched.
-- [ ] Interrupting and rerunning resumes the recorded batch instead of submitting a new one.
-- [ ] Structurally rejected, errored and expired results are not written and are listed for retry.
-- [ ] The review report lists each written draft with its flags, flagged drafts first.
-- [ ] The state file and review report are gitignored; the API key appears in no Vercel environment.
-- [ ] The script is not invoked by `build` or any deploy step.
+- [x] `--dry-run` prints 73 requests and a token estimate and makes no API call.
+- [x] `--only <slug>` against a real key drafts one constellation end to end (a few cents), and the draft renders on its constellation page in local dev.
+- [x] Rerunning with a lesson file already present skips it; the 15 handwritten lessons are never touched.
+- [x] Interrupting and rerunning resumes the recorded batch instead of submitting a new one.
+- [x] Structurally rejected, errored and expired results are not written and are listed for retry.
+- [x] The review report lists each written draft with its flags, flagged drafts first.
+- [x] The state file and review report are gitignored; the API key appears in no Vercel environment.
+- [x] The script is not invoked by `build` or any deploy step.
 
 ## 4. Run the drafts
 
@@ -120,9 +120,9 @@ seven review branches.
 
 **Blocked by:** 3. The drafting script.
 
-- [ ] All 73 drafts written (after retries), with a review report.
-- [ ] Total spend recorded, and under $5.
-- [ ] Seven branches exist, each containing only its group's lesson files.
+- [x] All 73 drafts written (after retries), with a review report.
+- [x] Total spend recorded, and under $5. ($1.12 — see the run record in `04-run-the-drafts.md`.)
+- [x] Seven branches exist, each containing only its group's lesson files.
 - [ ] The dedicated key is revoked after the last review PR merges.
 
 ## 5. Review lessons — group A
