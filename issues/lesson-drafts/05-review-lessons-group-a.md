@@ -41,7 +41,8 @@ so that PR stays lesson files only, as #33 did for tickets 3 and 4.
 - **The star catalog names both α² CVn and β CVn "Chara"** (`public/data/bsc5.json`, ids 4915
   and 4785, from the upstream `Common` field read by `scripts/fetch-bsc.mjs`). The star popup
   still calls Cor Caroli "Chara", so the corrected lesson now disagrees with it. The lesson is
-  right; the catalog needs the fix.
+  right; the catalog needs the fix. Tracked as ticket 12
+  (`12-fix-cor-caroli-star-name.md`).
 - **Later groups likely carry the same kinds of error.** The checker found none of the above,
   so tickets 6–11 need the same full read, not only flag resolution.
 - **Catalog oddities the lessons inherit unchanged**, since the fact sheet is the only
