@@ -134,10 +134,10 @@ accuracy and tone. Merging makes these lessons live.
 
 **Blocked by:** 4. Run the drafts.
 
-- [ ] Every flag in the group's report is resolved (corrected or confirmed correct).
-- [ ] Each lesson has been read in full; mythology/history claims checked.
-- [ ] Each lesson renders on its constellation page, and the mark-read control works.
-- [ ] PR contains lesson files only.
+- [x] Every flag in the group's report is resolved (corrected or confirmed correct).
+- [x] Each lesson has been read in full; mythology/history claims checked.
+- [x] Each lesson renders on its constellation page, and the mark-read control works.
+- [x] PR contains lesson files only. (See the review record in `05-review-lessons-group-a.md`.)
 
 ## 6. Review lessons — group B
 
