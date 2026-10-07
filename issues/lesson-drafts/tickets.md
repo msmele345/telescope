@@ -183,10 +183,11 @@ Monoceros, Musca, Norma, Octans, Ophiuchus, Pavo. Same review bar as group A.
 
 **Blocked by:** 4. Run the drafts.
 
-- [ ] Every flag in the group's report is resolved (corrected or confirmed correct).
-- [ ] Each lesson has been read in full; mythology/history claims checked.
+- [x] Every flag in the group's report is resolved (corrected or confirmed correct).
+- [x] Each lesson has been read in full; mythology/history claims checked.
 - [ ] Each lesson renders on its constellation page, and the mark-read control works.
-- [ ] PR contains lesson files only.
+      Rendering is checked; the signed-in toggle is not.
+- [x] PR contains lesson files only. (See the review record in `09-review-lessons-group-e.md`.)
 
 ## 10. Review lessons — group F
 
@@ -195,10 +196,11 @@ Piscis Austrinus, Puppis, Pyxis, Reticulum, Sagitta, Sculptor. Same review bar a
 
 **Blocked by:** 4. Run the drafts.
 
-- [ ] Every flag in the group's report is resolved (corrected or confirmed correct).
-- [ ] Each lesson has been read in full; mythology/history claims checked.
+- [x] Every flag in the group's report is resolved (corrected or confirmed correct).
+- [x] Each lesson has been read in full; mythology/history claims checked.
 - [ ] Each lesson renders on its constellation page, and the mark-read control works.
-- [ ] PR contains lesson files only.
+      Rendering is checked; the signed-in toggle is not.
+- [x] PR contains lesson files only. (See the review record in `10-review-lessons-group-f.md`.)
 
 ## 11. Review lessons — group G
 
@@ -207,10 +209,11 @@ Triangulum, Triangulum Australe, Tucana, Vela, Volans, Vulpecula. Same review ba
 
 **Blocked by:** 4. Run the drafts.
 
-- [ ] Every flag in the group's report is resolved (corrected or confirmed correct).
-- [ ] Each lesson has been read in full; mythology/history claims checked.
+- [x] Every flag in the group's report is resolved (corrected or confirmed correct).
+- [x] Each lesson has been read in full; mythology/history claims checked.
 - [ ] Each lesson renders on its constellation page, and the mark-read control works.
-- [ ] PR contains lesson files only.
+      Rendering is checked; the signed-in toggle is not.
+- [x] PR contains lesson files only. (See the review record in `11-review-lessons-group-g.md`.)
 
 ## 12. Fix the Cor Caroli star name in the catalog
 

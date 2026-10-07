@@ -15,7 +15,7 @@ Triangulum, Triangulum Australe, Tucana, Vela, Volans, Vulpecula. Same review ba
 
 ## Review record
 
-Done on `feat/11-review-lessons-group-g`: all 10 lessons edited. The PR description is the
+Open as #50 (`feat/11-review-lessons-group-g`): all 10 lessons edited. The PR description is the
 full record (flags table, every correction as was/now, what was checked and left alone,
 catalog notes); this is the summary.
 
