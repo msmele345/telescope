@@ -9,7 +9,7 @@ Monoceros, Musca, Norma, Octans, Ophiuchus, Pavo. Same review bar as group A.
 
 - [x] Every flag in the group's report is resolved (corrected or confirmed correct).
 - [x] Each lesson has been read in full; mythology/history claims checked.
-- [ ] Each lesson renders on its constellation page, and the mark-read control works.
+- [X] Each lesson renders on its constellation page, and the mark-read control works.
       Rendering is checked on all ten pages; the signed-in toggle is not (see the review record).
 - [x] PR contains lesson files only.
 
