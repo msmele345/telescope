@@ -5,6 +5,9 @@
 //
 // `distLy` is resolved through a fallback chain (curated → Hipparcos → BSC):
 // the Hipparcos cross-match lifts distance coverage from ~34% to ~99%.
+//
+// `name` is the source's proper name, corrected where the source gives two
+// stars one name (see CURATED_NAMES in lib/star-name.mjs).
 
 import { writeFile, mkdir } from "node:fs/promises";
 import { join, dirname } from "node:path";
@@ -12,6 +15,7 @@ import { fileURLToPath } from "node:url";
 
 import { loadHipparcosByHD } from "./fetch-hipparcos.mjs";
 import { resolveDistanceLy } from "./lib/star-distance.mjs";
+import { resolveStarName } from "./lib/star-name.mjs";
 
 // bsc5-all.json keeps fields the short variant drops — notably Parallax
 // (arcseconds) and Common (proper name).
@@ -62,7 +66,8 @@ async function main() {
       dec: parseDec(s.Dec),
       mag: Number(s.Vmag),
     };
-    if (s.Common) star.name = s.Common;
+    const name = resolveStarName({ hr: star.id, commonName: s.Common });
+    if (name) star.name = name;
     if (s.Bayer) star.bayer = s.Bayer;
     if (s.Constellation) star.constellation = s.Constellation;
     if (s.K) star.colorK = Number(s.K);
