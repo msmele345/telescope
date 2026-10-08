@@ -9,5 +9,5 @@ Cygnus, Delphinus, Dorado, Draco, Equuleus, Eridanus, Fornax. Same review bar as
 
 - [x] Every flag in the group's report is resolved (corrected or confirmed correct).
 - [x] Each lesson has been read in full; mythology/history claims checked.
-- [ ] Each lesson renders on its constellation page, and the mark-read control works.
-- [ ] PR contains lesson files only.
+- [X] Each lesson renders on its constellation page, and the mark-read control works.
+- [X] PR contains lesson files only.
