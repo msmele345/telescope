@@ -147,10 +147,10 @@ Same review bar as group A.
 
 **Blocked by:** 4. Run the drafts.
 
-- [ ] Every flag in the group's report is resolved (corrected or confirmed correct).
-- [ ] Each lesson has been read in full; mythology/history claims checked.
-- [ ] Each lesson renders on its constellation page, and the mark-read control works.
-- [ ] PR contains lesson files only.
+- [x] Every flag in the group's report is resolved (corrected or confirmed correct).
+- [x] Each lesson has been read in full; mythology/history claims checked.
+- [x] Each lesson renders on its constellation page, and the mark-read control works.
+- [x] PR contains lesson files only.
 
 ## 7. Review lessons — group C
 
@@ -159,10 +159,10 @@ Cygnus, Delphinus, Dorado, Draco, Equuleus, Eridanus, Fornax. Same review bar as
 
 **Blocked by:** 4. Run the drafts.
 
-- [ ] Every flag in the group's report is resolved (corrected or confirmed correct).
-- [ ] Each lesson has been read in full; mythology/history claims checked.
-- [ ] Each lesson renders on its constellation page, and the mark-read control works.
-- [ ] PR contains lesson files only.
+- [x] Every flag in the group's report is resolved (corrected or confirmed correct).
+- [x] Each lesson has been read in full; mythology/history claims checked.
+- [x] Each lesson renders on its constellation page, and the mark-read control works.
+- [x] PR contains lesson files only.
 
 ## 8. Review lessons — group D
 
@@ -171,10 +171,10 @@ Hydrus, Indus, Lacerta, Leo Minor, Lepus, Lupus. Same review bar as group A.
 
 **Blocked by:** 4. Run the drafts.
 
-- [ ] Every flag in the group's report is resolved (corrected or confirmed correct).
-- [ ] Each lesson has been read in full; mythology/history claims checked.
-- [ ] Each lesson renders on its constellation page, and the mark-read control works.
-- [ ] PR contains lesson files only.
+- [x] Every flag in the group's report is resolved (corrected or confirmed correct).
+- [x] Each lesson has been read in full; mythology/history claims checked.
+- [x] Each lesson renders on its constellation page, and the mark-read control works.
+- [x] PR contains lesson files only.
 
 ## 9. Review lessons — group E
 
@@ -185,7 +185,7 @@ Monoceros, Musca, Norma, Octans, Ophiuchus, Pavo. Same review bar as group A.
 
 - [x] Every flag in the group's report is resolved (corrected or confirmed correct).
 - [x] Each lesson has been read in full; mythology/history claims checked.
-- [ ] Each lesson renders on its constellation page, and the mark-read control works.
+- [x] Each lesson renders on its constellation page, and the mark-read control works.
       Rendering is checked; the signed-in toggle is not.
 - [x] PR contains lesson files only. (See the review record in `09-review-lessons-group-e.md`.)
 
@@ -198,7 +198,7 @@ Piscis Austrinus, Puppis, Pyxis, Reticulum, Sagitta, Sculptor. Same review bar a
 
 - [x] Every flag in the group's report is resolved (corrected or confirmed correct).
 - [x] Each lesson has been read in full; mythology/history claims checked.
-- [ ] Each lesson renders on its constellation page, and the mark-read control works.
+- [x] Each lesson renders on its constellation page, and the mark-read control works.
       Rendering is checked; the signed-in toggle is not.
 - [x] PR contains lesson files only. (See the review record in `10-review-lessons-group-f.md`.)
 
@@ -211,7 +211,7 @@ Triangulum, Triangulum Australe, Tucana, Vela, Volans, Vulpecula. Same review ba
 
 - [x] Every flag in the group's report is resolved (corrected or confirmed correct).
 - [x] Each lesson has been read in full; mythology/history claims checked.
-- [ ] Each lesson renders on its constellation page, and the mark-read control works.
+- [x] Each lesson renders on its constellation page, and the mark-read control works.
       Rendering is checked; the signed-in toggle is not.
 - [x] PR contains lesson files only. (See the review record in `11-review-lessons-group-g.md`.)
 
@@ -227,10 +227,10 @@ number like `CURATED_DISTANCES`, as a tested pure helper, then regenerate
 
 **Blocked by:** None — can start immediately. Independent of review tickets 6–11.
 
-- [ ] HR 4915 (α² CVn) is named "Cor Caroli" in `public/data/bsc5.json`; HR 4785 (β CVn) is still "Chara".
-- [ ] The correction lives in the build (a tested pure helper used by `fetch-bsc.mjs`), so rerunning `npm run data:fetch:bsc` keeps it.
-- [ ] Test: the helper returns the curated name for a corrected HR number and the source name unchanged for every other star, including one with no name.
-- [ ] The regenerated `bsc5.json` differs from the committed one only in the intended names — no positions, magnitudes or distances move.
-- [ ] The star popup titles the star "Cor Caroli", and searching "Cor Caroli" finds it.
-- [ ] `checkLessonDraft` on `content/constellations/canes-venatici.mdx` no longer flags "Cor Caroli".
-- [ ] The full test suite passes; `next build` succeeds.
+- [x] HR 4915 (α² CVn) is named "Cor Caroli" in `public/data/bsc5.json`; HR 4785 (β CVn) is still "Chara".
+- [x] The correction lives in the build (a tested pure helper used by `fetch-bsc.mjs`), so rerunning `npm run data:fetch:bsc` keeps it.
+- [x] Test: the helper returns the curated name for a corrected HR number and the source name unchanged for every other star, including one with no name.
+- [x] The regenerated `bsc5.json` differs from the committed one only in the intended names — no positions, magnitudes or distances move.
+- [x] The star popup titles the star "Cor Caroli", and searching "Cor Caroli" finds it.
+- [x] `checkLessonDraft` on `content/constellations/canes-venatici.mdx` no longer flags "Cor Caroli".
+- [x] The full test suite passes; `next build` succeeds.
