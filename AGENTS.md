@@ -24,9 +24,10 @@ Read these on demand — they are long, so they are not auto-loaded:
 
 # Local database
 
-> "Branch" is overloaded here. **Neon branches** (`production`, `dev`) are copy-on-write
+> "Branch" is overloaded here. **Neon branches** (`production`, `dev`, `preview/dev`) are copy-on-write
 > database copies. **Git branches** (`main`, `develop`, `feat/*`) are source control. They are
 > unrelated: every git branch you work on locally talks to the Neon `dev` branch.
+> preview/dev db name is `br-tiny-band-av0fsdr7`.
 
 The Neon integration's vars are marked **Sensitive** (write-only) and are attached only to the
 Preview and Production Vercel environments, so `npm run env:pull` can never supply them. Set the
