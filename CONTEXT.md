@@ -16,6 +16,14 @@ Shared vocabulary and standing decisions that don't belong to any single spec. S
   browser and, for signed-in users, in user settings.
 - **Virtual time** — the time the sky map is currently showing, driven by the time controller.
   It is not necessarily the wall-clock time.
+- **Tour** — a hand-written route through the sky: five to seven stops, a tour window, and
+  short per-stop commentary, in one file under `content/tours/`. See `plans/v4-guided-tours.md`.
+- **Stop** — one point on a tour: a constellation, a named star, or a Messier object (never a
+  planet, the Sun or the Moon, which drift). Has its own heading and commentary.
+- **Tour window** — the part of the year (e.g. Dec–Mar) in which a tour is meant to be seen.
+- **Tour time** — the earliest evening (Sun below −12°) within the tour window at which every
+  stop is above 20° from the observer. Starting a tour sets the virtual time to it; the
+  observer is never changed.
 
 ## Future considerations
 
@@ -55,3 +63,7 @@ Decisions reached so far:
   model only writes prose from it and never decides what is up.
 - Open: the definition of "tonight". The zipcode data carries no timezone, so a local night
   needs a timezone source (or a longitude-derived approximation) before this can be specified.
+- Planned to also power a generated **"Tonight's tour"** that reuses the guided-tour player
+  (`plans/v4-guided-tours.md`), with planets and the Moon allowed as stops. That spec defines
+  "evening" by Sun altitude and longitude rather than a timezone, which may settle the open
+  question above.
