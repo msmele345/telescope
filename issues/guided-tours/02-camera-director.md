@@ -16,6 +16,11 @@ stays disabled.** Only code can change the FOV.
   from wherever the user has dragged to.
 - `prefers-reduced-motion`: cut instantly to the target.
 - Point picking must still select the right star at 15° and 50° FOV. Check the pick threshold.
+- Drag speed scales with FOV: `rotateSpeed` (a fixed −0.4 today) is multiplied by `fov / 75`
+  while zoomed, so dragging doesn't feel five times twitchier at 15°.
+- A target can be almost straight overhead (Vega from the default observer), where OrbitControls
+  is least stable. Try a target within 1° of the zenith in the harness. If a shortest-arc move
+  doesn't end settled there, interpolate in azimuth/altitude instead.
 - Highlight: a ring around a star or Messier target, brightened lines for a constellation target.
 
 The interpolation (direction and FOV against normalised time) is a pure function. Build it
@@ -27,6 +32,9 @@ test-first. Remove any dev-only entry point before merge, or gate it out of prod
 - [ ] Per-kind target tests: the direction and FOV produced for a constellation, a star and a Messier object.
 - [ ] The view moves smoothly to a target and the FOV narrows. Dragging works again once it settles.
 - [ ] Clicking a star while zoomed to 15° selects that star.
+- [ ] Pure tests: the drag-speed factor for a given FOV, and a target within 1° of the zenith ends finite and exact.
+- [ ] Dragging at 15° moves the sky the same distance on screen as at 75°.
+- [ ] A transition to a target within 1° of the zenith ends settled, and dragging works afterwards.
 - [ ] The scroll wheel still does not zoom.
 - [ ] Full test suite passes; `next build` succeeds.
 - [ ] **Checked on a Vercel preview deploy:** the transition holds 60 fps on a laptop.
