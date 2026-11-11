@@ -6,16 +6,25 @@
 ticket 1's time-finder and the fixture tour, and ticket 2's camera director.
 
 - **On start:** compute the tour time for the current observer (`DEFAULT_OBSERVER` if none is
-  saved), remember the previous virtual time and play mode, pause, and `scrubTo` the tour time.
-  **Never change the observer.** If the tour time isn't tonight, say so: "Showing the sky on
-  Jun 21, 9:30pm, the next evening this tour is visible from you."
+  saved), remember the previous play mode, speed and **offset from real time** (not the absolute
+  virtual time), pause, and `scrubTo` the tour time. **Never change the observer.** If the tour
+  time isn't tonight (its `tonight` flag), say so with the night-of date: "Showing the sky on
+  the night of Jun 21, 11:30pm, the next evening this tour is visible from you."
+- **No tour time:** if `findTourTime` returns `null` (reachable from Alaska, for example), don't
+  start. Load the map normally with a dismissible notice, "<Tour title> isn't visible from your
+  location", and remove `?tour=` from the URL.
 - **Panel:** heading, markdown body, "Stop n of N", Back / Next / Exit. Constellation stops show
   a "Read the full lesson →" link. Star and Messier stops open the existing popup.
 - **User-paced:** no timers. The state is the current stop number.
 - **Scrubber frozen:** it stays visible and shows the tour time, play and drag are disabled, and
   a tooltip explains why.
-- **End / Exit:** offer "Return to <previous time>" (restores the previous virtual time *and*
-  play mode) or "Stay here". The FOV returns to 75°.
+- **End / Exit:** offer "Return" or "Stay here". Return restores the previous play mode and
+  speed, and sets virtual time to real now plus the remembered offset, so a map that was live
+  comes back live. The button reads "Return to now" when the offset is under a minute, otherwise
+  "Return to <previous time>". The FOV returns to 75°. Either choice removes `?tour=` from the
+  URL with a replace, so a refresh doesn't restart the tour.
+- **Sign-in from a tour popup:** `StarPopup` returns sign-in to `/?star=ID` today. A popup
+  opened by a tour returns to `/?tour=<slug>` instead (restarting at stop 1 is fine).
 - **Keyboard:** ← / → and Esc. The panel is plain DOM text and is fully usable by screen reader.
 - An unknown slug is ignored, and the map loads normally.
 
@@ -27,8 +36,12 @@ Component tests with the canvas stubbed and a fake clock. Build test-first.
 - [ ] The observer (state, localStorage and DB) is never modified by a tour.
 - [ ] Next / Back / ← / → move between stops; Esc exits.
 - [ ] The scrubber is disabled during a tour and shows the tour time.
-- [ ] Exit → "Return" restores the previous virtual time and play mode; "Stay" keeps the tour time.
-- [ ] A tour whose next evening isn't tonight shows the jump label.
+- [ ] Exit → "Return" restores the previous play mode, speed and offset from real time; "Stay" keeps the tour time.
+- [ ] A map that was live before the tour is live again after "Return", with the clock advanced during the tour.
+- [ ] Either exit choice removes `?tour=` from the URL.
+- [ ] A tour with no tour time shows the notice, doesn't start, and leaves time and view untouched.
+- [ ] Signing in from a popup opened by a tour returns to `/?tour=<slug>`.
+- [ ] A tour whose next evening isn't tonight shows the jump label with the night-of date.
 - [ ] Star and Messier stops open their popup; constellation stops link to the lesson.
 - [ ] Works with no saved location, and the location banner is unchanged.
 - [ ] Full test suite passes; `next build` succeeds.

@@ -23,7 +23,10 @@ Shared vocabulary and standing decisions that don't belong to any single spec. S
 - **Tour window** — the part of the year (e.g. Dec–Mar) in which a tour is meant to be seen.
 - **Tour time** — the earliest evening (Sun below −12°) within the tour window at which every
   stop is above 20° from the observer. Starting a tour sets the virtual time to it; the
-  observer is never changed.
+  observer is never changed. A tour has no tour time from a location where some stop never
+  gets that high (parts of Alaska, for example), and can't be started there.
+- **Night-of date** — the date of the evening a tour time belongs to, used in labels because
+  an evening instant can fall after 12am on the next calendar date.
 
 ## Future considerations
 
