@@ -44,12 +44,34 @@ export function computeSolarBodies(
       id,
       name,
       kind,
-      ra: eq.ra * HOURS_TO_RAD,
-      dec: eq.dec * DEG_TO_RAD,
+      ...equatorialRadians(eq),
       mag,
       distAU: eq.dist,
     };
   });
+}
+
+/**
+ * The Sun's apparent RA/Dec alone — the same position `computeSolarBodies`
+ * reports for it, without the cost of the other eight bodies and the
+ * magnitude. For callers that sample the Sun many times (the tour
+ * time-finder checks its altitude through every evening of a year).
+ */
+export function computeSunPosition(
+  observer: ObserverLocation,
+  when: Date
+): { ra: number; dec: number } {
+  const obs = new Astronomy.Observer(observer.lat, observer.lng, 0);
+  return equatorialRadians(
+    Astronomy.Equator(Astronomy.Body.Sun, when, obs, true, true)
+  );
+}
+
+function equatorialRadians(eq: Astronomy.EquatorialCoordinates): {
+  ra: number;
+  dec: number;
+} {
+  return { ra: eq.ra * HOURS_TO_RAD, dec: eq.dec * DEG_TO_RAD };
 }
 
 function magnitudeFor(body: Astronomy.Body, when: Date): number {

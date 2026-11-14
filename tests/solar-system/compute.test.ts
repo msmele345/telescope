@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   computeSolarBodies,
+  computeSunPosition,
   SOLAR_BODY_IDS,
   type SolarBody,
 } from "@/lib/solar-system";
@@ -108,5 +109,15 @@ describe("computeSolarBodies", () => {
       "uranus",
       "neptune",
     ]);
+  });
+});
+
+describe("computeSunPosition", () => {
+  it("gives the same RA/Dec as the Sun from computeSolarBodies", () => {
+    const when = new Date("2026-03-20T18:00:00Z");
+    const sun = computeSolarBodies(MINNEAPOLIS, when).find((b) => b.id === "sun")!;
+    const pos = computeSunPosition(MINNEAPOLIS, when);
+    expect(pos.ra).toBeCloseTo(sun.ra, 12);
+    expect(pos.dec).toBeCloseTo(sun.dec, 12);
   });
 });
