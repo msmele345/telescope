@@ -2,13 +2,17 @@
 - Runtime: Node.js 22, npm 10.9.4
 - DB: Postgres on Neon (via the Vercel Marketplace integration)
 
+###
+Project Context and Glossary: `CONTEXT.md` (read this first)
+
 # Project Overview and Plan:
 Read these on demand — they are long, so they are not auto-loaded:
 - `docs/PRD.md` — product goals. Its auth section (NextAuth, Google OAuth, magic links) is
   **superseded** by the v2 plan below and no longer describes the code.
 - `plans/telescope-star-map.md` — the formal phased plan (Phases 1–12).
-- `plans/v2-lightweight-auth.md` — the auth refactor. **This work is active**: read it before
+- `plans/v2-lightweight-auth.md` — the auth refactor. Read it before
   touching anything auth-, session-, login-, or email-related.
+- `plans/v4-guided-tours.md` — the next major feature. **This work is active**
 
 # Run Commands:
 - npm run env:pull  # pulls the Development env into .env.local, then appends scripts/env-aliases.sh

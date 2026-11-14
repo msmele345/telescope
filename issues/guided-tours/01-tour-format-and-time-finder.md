@@ -29,14 +29,14 @@ something to run against before ticket 5 lands. Ticket 5 replaces it.
 
 **Blocked by:** None. Can start immediately.
 
-- [ ] `Tour` / `TourStop` types match the spec; star IDs are numbers, constellation IDs are IAU abbreviations, Messier IDs are `M<n>` strings.
-- [ ] Adding a tour means adding one file to `content/tours/` (plus at most one registry line, kept honest by a test).
-- [ ] `findTourTime` returns an instant where every stop is above 20° and the Sun is below −12°.
-- [ ] It returns the *earliest* qualifying evening, never a pre-dawn time.
-- [ ] It handles a window that wraps the year end (for example Nov–Feb).
-- [ ] It returns `null` for a tour that is never visible from the observer's latitude.
-- [ ] `tonight` is true for an instant later this evening, including one after 12am on the clock, and false for tomorrow evening.
-- [ ] The night-of date helper returns the evening's date for an instant after 12am.
-- [ ] A constellation whose line figure straddles RA 0h (Pegasus) gets a sensible average direction.
-- [ ] Content test: for every tour, slug matches the filename, 5–7 stops, every ID resolves in its catalog, and, searching from the first day of the tour window in a fixed year, `findTourTime` returns an evening within 14 days of the window start from both 25°N and 49°N.
-- [ ] Full test suite passes; `next build` succeeds.
+- [x] `Tour` / `TourStop` types match the spec; star IDs are numbers, constellation IDs are IAU abbreviations, Messier IDs are `M<n>` strings.
+- [x] Adding a tour means adding one file to `content/tours/` (plus at most one registry line, kept honest by a test).
+- [x] `findTourTime` returns an instant where every stop is above 20° and the Sun is below −12°.
+- [x] It returns the *earliest* qualifying evening, never a pre-dawn time.
+- [x] It handles a window that wraps the year end (for example Nov–Feb).
+- [x] It returns `null` for a tour that is never visible from the observer's latitude.
+- [x] `tonight` is true for an instant later this evening, including one after 12am on the clock, and false for tomorrow evening.
+- [x] The night-of date helper returns the evening's date for an instant after 12am.
+- [x] A constellation whose line figure straddles RA 0h (Pegasus) gets a sensible average direction.
+- [x] Content test: for every tour, slug matches the filename, 5–7 stops, every ID resolves in its catalog, and, searching from the first day of the tour window in a fixed year, `findTourTime` returns an evening within 14 days of the window start from both 25°N and 49°N.
+- [x] Full test suite passes; `next build` succeeds.
