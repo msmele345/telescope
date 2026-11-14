@@ -1,10 +1,21 @@
 import type { ObserverLocation } from "@/lib/observer";
-import { equatorialToHorizontal, localSiderealTime } from "@/lib/sky-math";
+import {
+  DEG,
+  equatorialToHorizontal,
+  localSiderealTime,
+  type Equatorial,
+} from "@/lib/sky-math";
 import { computeSunPosition } from "@/lib/solar-system";
-import { stopDirection, type Direction } from "./direction";
-import type { MonthDay, Tour, TourCatalogs, TourStop, TourTime } from "./types";
+import { stopDirection } from "./direction";
+import type {
+  MonthDay,
+  Tour,
+  TourCatalogs,
+  TourStop,
+  TourTime,
+  TourWindow,
+} from "./types";
 
-const DEG = Math.PI / 180;
 const MINUTE_MS = 60_000;
 const HOUR_MS = 60 * MINUTE_MS;
 const DAY_MS = 24 * HOUR_MS;
@@ -37,7 +48,7 @@ export function findTourTime(
   after: Date,
   catalogs: TourCatalogs
 ): TourTime | null {
-  const directions = tour.stops.map((stop) => resolve(tour, stop, catalogs));
+  const directions = tour.stops.map((stop) => requireDirection(tour, stop, catalogs));
   const latRad = observer.lat * DEG;
   const lngRad = observer.lng * DEG;
   const afterMs = after.getTime();
@@ -72,7 +83,11 @@ export function findTourTime(
   return null;
 }
 
-function resolve(tour: Tour, stop: TourStop, catalogs: TourCatalogs): Direction {
+function requireDirection(
+  tour: Tour,
+  stop: TourStop,
+  catalogs: TourCatalogs
+): Equatorial {
   const dir = stopDirection(stop, catalogs);
   if (!dir) {
     throw new Error(
@@ -101,7 +116,7 @@ function solarDateOf(ms: number, lngDeg: number): MonthDay {
 }
 
 /** Both ends inclusive. A window whose start falls after its end wraps the year end. */
-function inWindow(date: MonthDay, window: Tour["window"]): boolean {
+function inWindow(date: MonthDay, window: TourWindow): boolean {
   const key = (d: MonthDay) => d.month * 100 + d.day;
   const k = key(date);
   const from = key(window.from);

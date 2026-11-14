@@ -8,6 +8,15 @@ export interface MonthDay {
   day: number;
 }
 
+/**
+ * The part of the year a tour is meant to be seen, both ends inclusive. It
+ * wraps the year end when `from` falls after `to` (e.g. Nov 1 → Feb 28).
+ */
+export interface TourWindow {
+  from: MonthDay;
+  to: MonthDay;
+}
+
 export type TourStop =
   | {
       kind: "constellation";
@@ -37,11 +46,7 @@ export interface Tour {
   title: string;
   /** One sentence, shown in the tour list. */
   summary: string;
-  /**
-   * The tour window, both ends inclusive. It wraps the year end when `from`
-   * falls after `to` (e.g. Nov 1 → Feb 28).
-   */
-  window: { from: MonthDay; to: MonthDay };
+  window: TourWindow;
   /** Five to seven stops. */
   stops: readonly TourStop[];
 }

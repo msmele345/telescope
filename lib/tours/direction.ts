@@ -1,25 +1,20 @@
 import type { Polyline } from "@/lib/constellation/types";
 import { getMessierById } from "@/lib/messier";
+import type { Equatorial } from "@/lib/sky-math";
 import type { TourCatalogs, TourStop } from "./types";
 
 const TWO_PI = Math.PI * 2;
-
-export interface Direction {
-  /** Right ascension in radians, on [0, 2π). */
-  ra: number;
-  /** Declination in radians. */
-  dec: number;
-}
 
 /**
  * Where a stop sits on the celestial sphere, or null when its ID is not in
  * its catalog. Stars and Messier objects use their catalog position. A
  * constellation uses the average direction of its line-figure vertices.
+ * RA is on [0, 2π).
  */
 export function stopDirection(
   stop: TourStop,
   catalogs: TourCatalogs
-): Direction | null {
+): Equatorial | null {
   switch (stop.kind) {
     case "star": {
       const star = catalogs.stars.find((s) => s.id === stop.id);
@@ -41,7 +36,7 @@ export function stopDirection(
  * RA seam (0h, or ±12h in the line data) averages to its middle, not to the
  * far side of the sky. A vertex shared by several polylines counts once.
  */
-function meanDirection(figure: readonly Polyline[]): Direction | null {
+function meanDirection(figure: readonly Polyline[]): Equatorial | null {
   const seen = new Set<string>();
   let x = 0;
   let y = 0;

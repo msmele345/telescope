@@ -1,5 +1,11 @@
-export type { MonthDay, Tour, TourCatalogs, TourStop, TourTime } from "./types";
-export type { Direction } from "./direction";
+export type {
+  MonthDay,
+  Tour,
+  TourCatalogs,
+  TourStop,
+  TourTime,
+  TourWindow,
+} from "./types";
 export { stopDirection } from "./direction";
 export { findTourTime } from "./time-finder";
 export { formatNightOf } from "./night-of";
