@@ -1,9 +1,10 @@
 "use client";
 
-import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
+import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import {
   buildHorizonStarFieldAttributes,
   loadCatalog,
@@ -30,14 +31,38 @@ import {
   localSiderealTime,
 } from "@/lib/sky-math";
 import { DEFAULT_OBSERVER, type ObserverLocation } from "@/lib/observer";
+import {
+  BASE_PICK_THRESHOLD,
+  RESET_FOV,
+  applyView,
+  pickThresholdForFov,
+  readView,
+  rotateSpeedForFov,
+  skyDirection,
+  stopMomentum,
+  viewAt,
+  viewForTarget,
+  type CameraTarget,
+  type CameraView,
+} from "@/lib/camera-director";
+import { stopDirection } from "@/lib/tours";
 import Horizon from "./Horizon";
 import MilkyWay from "./MilkyWay";
 
 const SPHERE_RADIUS = 50;
-const POINT_PICK_THRESHOLD = 1.2;
 const SOLAR_RADIUS = 49;
 const MESSIER_RADIUS = 49.5;
+const HIGHLIGHT_RADIUS = 48.5;
 const DEG = Math.PI / 180;
+
+// Applied once, when the canvas creates its camera. After that the camera
+// director owns the FOV, OrbitControls owns the position.
+const CAMERA_OPTIONS = {
+  position: [0, -0.00004, 0.0001] as [number, number, number],
+  fov: RESET_FOV,
+  near: 0.00001,
+  far: 1000,
+};
 
 function prefersReducedMotion(): boolean {
   return (
@@ -56,6 +81,12 @@ export interface SkyCanvasProps {
   onSelectPlanet?: (body: SolarBody) => void;
   /** Called when the user clicks a Messier deep-sky object. */
   onSelectMessier?: (object: MessierObject) => void;
+  /**
+   * What the view is pointed and zoomed at. Changing it eases the view there
+   * (a cut with reduced motion) and highlights it. Null or absent zooms back
+   * out to the default FOV, leaving the direction where it is.
+   */
+  focus?: CameraTarget | null;
 }
 
 export default function SkyCanvas({
@@ -64,22 +95,25 @@ export default function SkyCanvas({
   onSelectStar,
   onSelectPlanet,
   onSelectMessier,
+  focus = null,
 }: SkyCanvasProps) {
+  const stars = useLoaded(loadCatalog, "star catalog");
+  const lines = useLoaded(loadConstellationLines, "constellation lines");
   return (
     <Canvas
-      camera={{ position: [0, -0.00004, 0.0001], fov: 75, near: 0.00001, far: 1000 }}
+      camera={CAMERA_OPTIONS}
       gl={{ antialias: true }}
       style={{ width: "100vw", height: "100vh", background: "#000011" }}
       onCreated={({ raycaster }) => {
         if (raycaster.params.Points) {
-          raycaster.params.Points.threshold = POINT_PICK_THRESHOLD;
+          raycaster.params.Points.threshold = BASE_PICK_THRESHOLD;
         }
       }}
     >
       <color attach="background" args={["#000011"]} />
       <MilkyWay observer={observer} when={when} radius={SPHERE_RADIUS} />
-      <StarField observer={observer} when={when} onSelectStar={onSelectStar} />
-      <ConstellationLineLayer observer={observer} when={when} />
+      <StarField stars={stars} observer={observer} when={when} onSelectStar={onSelectStar} />
+      <ConstellationLineLayer lines={lines} observer={observer} when={when} />
       <MessierLayer
         observer={observer}
         when={when}
@@ -90,41 +124,273 @@ export default function SkyCanvas({
         when={when}
         onSelectPlanet={onSelectPlanet}
       />
+      <FocusHighlight
+        focus={focus}
+        stars={stars}
+        lines={lines}
+        observer={observer}
+        when={when}
+      />
       <Horizon radius={SPHERE_RADIUS} />
-      <OrbitControls
-        enableZoom={false}
-        enablePan={false}
-        rotateSpeed={-0.4}
-        target={[0, 0, 0]}
+      {/* rotateSpeed is set by CameraDirector, which scales it with the FOV. */}
+      <OrbitControls makeDefault enableZoom={false} enablePan={false} target={[0, 0, 0]} />
+      <CameraDirector
+        focus={focus}
+        stars={stars}
+        lines={lines}
+        observer={observer}
+        when={when}
       />
     </Canvas>
   );
 }
 
-interface StarFieldProps {
-  observer: ObserverLocation;
-  when?: Date;
-  onSelectStar?: (star: Star) => void;
-}
-
-function StarField({ observer, when, onSelectStar }: StarFieldProps) {
-  const [stars, setStars] = useState<Star[] | null>(null);
-
+/** Load a catalog once on mount; null until it arrives. */
+function useLoaded<T>(load: () => Promise<T>, what: string): T | null {
+  const [value, setValue] = useState<T | null>(null);
   useEffect(() => {
     let cancelled = false;
-    loadCatalog().then(
+    load().then(
       (loaded) => {
-        if (!cancelled) setStars(loaded);
+        if (!cancelled) setValue(loaded);
       },
       (err) => {
-        console.error("Failed to load star catalog", err);
+        console.error(`Failed to load ${what}`, err);
       }
     );
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [load, what]);
+  return value;
+}
 
+/** A stable identity for a target, so a fresh object for the same target is not a new move. */
+function targetKey(target: CameraTarget | null): string | null {
+  if (!target) return null;
+  if (target.kind === "horizontal") return `horizontal:${target.alt},${target.az},${target.fov}`;
+  return `${target.kind}:${target.id}`;
+}
+
+interface FocusLayerProps {
+  focus: CameraTarget | null;
+  stars: Star[] | null;
+  lines: ConstellationLines | null;
+  observer: ObserverLocation;
+  when?: Date;
+}
+
+interface Transition {
+  from: CameraView;
+  to: CameraView;
+  startMs: number;
+  reducedMotion: boolean;
+}
+
+/**
+ * Eases the camera to `focus` whenever it changes, then hands control back to
+ * OrbitControls. Drag is disabled only while a move is running, and every
+ * move starts from wherever the view is now, including where the user has
+ * dragged it. Also keeps drag speed and the pick threshold matched to the FOV.
+ */
+function CameraDirector({ focus, stars, lines, observer, when }: FocusLayerProps) {
+  const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
+  const controls = useThree((s) => s.controls) as OrbitControlsImpl | null;
+  const raycaster = useThree((s) => s.raycaster);
+
+  // Read at the moment a move starts; a time tick alone never starts a move.
+  const latest = useRef({ focus, observer, when });
+  latest.current = { focus, observer, when };
+
+  /** The move to start on the next frame; given the view it starts from. */
+  const pending = useRef<((from: CameraView) => CameraView) | null>(null);
+  const transition = useRef<Transition | null>(null);
+  /** The target last acted on: undefined before the first render. */
+  const actedOn = useRef<string | null | undefined>(undefined);
+
+  const key = targetKey(focus);
+
+  useEffect(() => {
+    if (actedOn.current === key) return;
+    const target = latest.current.focus;
+    if (!target) {
+      // Nothing to undo on first mount; otherwise zoom back out in place.
+      if (actedOn.current !== undefined) {
+        pending.current = (from) => ({ direction: from.direction, fov: RESET_FOV });
+      }
+      actedOn.current = null;
+      return;
+    }
+    if (!stars || !lines) return; // try again once the catalogs arrive
+    actedOn.current = key;
+    const { observer: obs, when: at } = latest.current;
+    const to = viewForTarget(target, { stars, lines }, obs, at ?? new Date(), camera.aspect);
+    if (to) pending.current = () => to;
+  }, [key, stars, lines, camera]);
+
+  useEffect(() => {
+    if (controls) controls.rotateSpeed = rotateSpeedForFov(camera.fov);
+  }, [controls, camera]);
+
+  useFrame(() => {
+    if (pending.current) {
+      const from = readView(camera);
+      const to = pending.current(from);
+      pending.current = null;
+      if (controls) {
+        stopMomentum(controls);
+        controls.enabled = false;
+      }
+      transition.current = {
+        from,
+        to,
+        startMs: performance.now(),
+        reducedMotion: prefersReducedMotion(),
+      };
+    }
+
+    const t = transition.current;
+    if (!t) return;
+    const { view, done } = viewAt(t.from, t.to, performance.now() - t.startMs, {
+      reducedMotion: t.reducedMotion,
+    });
+    applyView(camera, view);
+    if (raycaster.params.Points) {
+      raycaster.params.Points.threshold = pickThresholdForFov(view.fov);
+    }
+    if (done) {
+      transition.current = null;
+      if (controls) {
+        controls.rotateSpeed = rotateSpeedForFov(view.fov);
+        controls.enabled = true;
+        controls.update();
+      }
+    }
+  });
+
+  return null;
+}
+
+/**
+ * Marks the current target: a ring round a star or Messier object, brightened
+ * lines for a constellation. Follows the sky as time moves. Has no click
+ * handlers, so it never gets in the way of picking.
+ */
+function FocusHighlight({ focus, stars, lines, observer, when }: FocusLayerProps) {
+  if (!focus || focus.kind === "horizontal") return null;
+  if (focus.kind === "constellation") {
+    const figure = lines?.[focus.id];
+    if (!figure) return null;
+    return <ConstellationHighlight id={focus.id} figure={figure} observer={observer} when={when} />;
+  }
+  if (focus.kind === "star" && !stars) return null;
+  const eq = stopDirection(focus, { stars: stars ?? [], lines: lines ?? {} });
+  if (!eq) return null;
+  return <TargetRing eq={eq} observer={observer} when={when} />;
+}
+
+const RING_SIZE_PX = 40;
+
+function TargetRing({
+  eq,
+  observer,
+  when,
+}: {
+  eq: { ra: number; dec: number };
+  observer: ObserverLocation;
+  when?: Date;
+}) {
+  const { ra, dec } = eq;
+  const geometry = useMemo(() => {
+    const d = skyDirection({ ra, dec }, observer, when ?? new Date());
+    const g = new THREE.BufferGeometry();
+    g.setAttribute(
+      "position",
+      new THREE.BufferAttribute(
+        new Float32Array([d.x * HIGHLIGHT_RADIUS, d.y * HIGHLIGHT_RADIUS, d.z * HIGHLIGHT_RADIUS]),
+        3
+      )
+    );
+    return g;
+  }, [ra, dec, observer, when]);
+
+  const material = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        vertexShader: `
+          void main() {
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            gl_PointSize = ${RING_SIZE_PX.toFixed(1)};
+          }
+        `,
+        fragmentShader: `
+          void main() {
+            float r = length(gl_PointCoord - 0.5);
+            float a = smoothstep(0.34, 0.38, r) * (1.0 - smoothstep(0.44, 0.48, r));
+            if (a <= 0.0) discard;
+            gl_FragColor = vec4(1.0, 0.86, 0.5, a * 0.9);
+          }
+        `,
+      }),
+    []
+  );
+
+  useEffect(() => () => geometry.dispose(), [geometry]);
+  useEffect(() => () => material.dispose(), [material]);
+
+  return <points geometry={geometry} material={material} renderOrder={10} />;
+}
+
+function ConstellationHighlight({
+  id,
+  figure,
+  observer,
+  when,
+}: {
+  id: string;
+  figure: ConstellationLines[string];
+  observer: ObserverLocation;
+  when?: Date;
+}) {
+  const geometry = useMemo(() => {
+    const positions = buildConstellationLineAttributes(
+      { [id]: figure },
+      observer,
+      when ?? new Date(),
+      SPHERE_RADIUS
+    );
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    return g;
+  }, [id, figure, observer, when]);
+
+  const material = useMemo(
+    () =>
+      new THREE.LineBasicMaterial({
+        color: new THREE.Color("#b8ceff"),
+        transparent: true,
+        opacity: 0.85,
+        depthWrite: false,
+      }),
+    []
+  );
+
+  useEffect(() => () => geometry.dispose(), [geometry]);
+  useEffect(() => () => material.dispose(), [material]);
+
+  return <lineSegments geometry={geometry} material={material} renderOrder={10} />;
+}
+
+interface StarFieldProps {
+  stars: Star[] | null;
+  observer: ObserverLocation;
+  when?: Date;
+  onSelectStar?: (star: Star) => void;
+}
+
+function StarField({ stars, observer, when, onSelectStar }: StarFieldProps) {
   const geometry = useMemo(() => {
     if (!stars) return null;
     const attrs = buildHorizonStarFieldAttributes(
@@ -230,28 +496,12 @@ function StarField({ observer, when, onSelectStar }: StarFieldProps) {
 }
 
 interface ConstellationLineLayerProps {
+  lines: ConstellationLines | null;
   observer: ObserverLocation;
   when?: Date;
 }
 
-function ConstellationLineLayer({ observer, when }: ConstellationLineLayerProps) {
-  const [lines, setLines] = useState<ConstellationLines | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    loadConstellationLines().then(
-      (loaded) => {
-        if (!cancelled) setLines(loaded);
-      },
-      (err) => {
-        console.error("Failed to load constellation lines", err);
-      }
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
+function ConstellationLineLayer({ lines, observer, when }: ConstellationLineLayerProps) {
   const geometry = useMemo(() => {
     if (!lines) return null;
     const positions = buildConstellationLineAttributes(

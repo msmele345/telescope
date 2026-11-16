@@ -10,6 +10,8 @@ import SkyDirectory from "@/components/SkyDirectory";
 import StarPopup from "@/components/StarPopup";
 import PlanetPopup from "@/components/PlanetPopup";
 import MessierPopup from "@/components/MessierPopup";
+import CameraHarness from "@/components/dev/CameraHarness";
+import { CAMERA_HARNESS_ENABLED, parseLookAt } from "@/lib/camera-director";
 import { loadCatalog, type Star } from "@/lib/star-catalog";
 import type { SolarBody } from "@/lib/solar-system";
 import type { MessierObject } from "@/lib/messier";
@@ -40,6 +42,9 @@ export default function Home() {
   const [selection, setSelection] = useState<Selection | null>(null);
   const searchParams = useSearchParams();
   const focusStarParam = searchParams.get("star");
+  // Dev/preview-only camera harness: /?lookAt=M42 (see CAMERA_HARNESS_ENABLED).
+  const lookAtParam = CAMERA_HARNESS_ENABLED ? searchParams.get("lookAt") : null;
+  const cameraFocus = useMemo(() => parseLookAt(lookAtParam), [lookAtParam]);
 
   useEffect(() => {
     const saved = loadSavedObserver();
@@ -130,7 +135,9 @@ export default function Home() {
         onSelectStar={handleSelectStar}
         onSelectPlanet={handleSelectPlanet}
         onSelectMessier={handleSelectMessier}
+        focus={cameraFocus}
       />
+      {CAMERA_HARNESS_ENABLED && <CameraHarness />}
       <SkyDirectory onSelectStar={handleSelectStar} />
       <LocationPrompt observer={observer} onResolve={handleResolve} />
       <TimeScrubber controller={controller} />

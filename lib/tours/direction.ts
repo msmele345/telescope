@@ -1,7 +1,7 @@
 import type { Polyline } from "@/lib/constellation/types";
 import { getMessierById } from "@/lib/messier";
 import type { Equatorial } from "@/lib/sky-math";
-import type { TourCatalogs, TourStop } from "./types";
+import type { StopRef, TourCatalogs } from "./types";
 
 const TWO_PI = Math.PI * 2;
 
@@ -12,7 +12,7 @@ const TWO_PI = Math.PI * 2;
  * RA is on [0, 2π).
  */
 export function stopDirection(
-  stop: TourStop,
+  stop: StopRef,
   catalogs: TourCatalogs
 ): Equatorial | null {
   switch (stop.kind) {

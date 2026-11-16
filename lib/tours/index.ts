@@ -1,5 +1,6 @@
 export type {
   MonthDay,
+  StopRef,
   Tour,
   TourCatalogs,
   TourStop,

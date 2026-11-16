@@ -40,6 +40,12 @@ export type TourStop =
       body: string;
     };
 
+/** The object a stop points at, without its commentary. */
+export type StopRef =
+  | { kind: "constellation"; id: string }
+  | { kind: "star"; id: number }
+  | { kind: "messier"; id: string };
+
 export interface Tour {
   /** Matches the file name in `content/tours/`. */
   slug: string;
