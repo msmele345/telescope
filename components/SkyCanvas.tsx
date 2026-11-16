@@ -29,6 +29,7 @@ import {
   equatorialToHorizontal,
   horizontalToVec3,
   localSiderealTime,
+  type Equatorial,
 } from "@/lib/sky-math";
 import { DEFAULT_OBSERVER, type ObserverLocation } from "@/lib/observer";
 import {
@@ -172,7 +173,7 @@ function targetKey(target: CameraTarget | null): string | null {
   return `${target.kind}:${target.id}`;
 }
 
-interface FocusLayerProps {
+interface FocusProps {
   focus: CameraTarget | null;
   stars: Star[] | null;
   lines: ConstellationLines | null;
@@ -193,7 +194,7 @@ interface Transition {
  * move starts from wherever the view is now, including where the user has
  * dragged it. Also keeps drag speed and the pick threshold matched to the FOV.
  */
-function CameraDirector({ focus, stars, lines, observer, when }: FocusLayerProps) {
+function CameraDirector({ focus, stars, lines, observer, when }: FocusProps) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const controls = useThree((s) => s.controls) as OrbitControlsImpl | null;
   const raycaster = useThree((s) => s.raycaster);
@@ -205,26 +206,29 @@ function CameraDirector({ focus, stars, lines, observer, when }: FocusLayerProps
   /** The move to start on the next frame; given the view it starts from. */
   const pending = useRef<((from: CameraView) => CameraView) | null>(null);
   const transition = useRef<Transition | null>(null);
-  /** The target last acted on: undefined before the first render. */
-  const actedOn = useRef<string | null | undefined>(undefined);
+  /** The key of the target last started: undefined before the first render. */
+  const startedKey = useRef<string | null | undefined>(undefined);
 
   const key = targetKey(focus);
 
   useEffect(() => {
-    if (actedOn.current === key) return;
+    if (startedKey.current === key) return;
     const target = latest.current.focus;
     if (!target) {
       // Nothing to undo on first mount; otherwise zoom back out in place.
-      if (actedOn.current !== undefined) {
+      if (startedKey.current !== undefined) {
         pending.current = (from) => ({ direction: from.direction, fov: RESET_FOV });
       }
-      actedOn.current = null;
+      startedKey.current = null;
       return;
     }
-    if (!stars || !lines) return; // try again once the catalogs arrive
-    actedOn.current = key;
+    // Wait only for the catalog this target is looked up in.
+    if (target.kind === "star" && !stars) return;
+    if (target.kind === "constellation" && !lines) return;
+    startedKey.current = key;
     const { observer: obs, when: at } = latest.current;
-    const to = viewForTarget(target, { stars, lines }, obs, at ?? new Date(), camera.aspect);
+    const catalogs = { stars: stars ?? [], lines: lines ?? {} };
+    const to = viewForTarget(target, catalogs, obs, at ?? new Date(), camera.aspect);
     if (to) pending.current = () => to;
   }, [key, stars, lines, camera]);
 
@@ -276,7 +280,7 @@ function CameraDirector({ focus, stars, lines, observer, when }: FocusLayerProps
  * lines for a constellation. Follows the sky as time moves. Has no click
  * handlers, so it never gets in the way of picking.
  */
-function FocusHighlight({ focus, stars, lines, observer, when }: FocusLayerProps) {
+function FocusHighlight({ focus, stars, lines, observer, when }: FocusProps) {
   if (!focus || focus.kind === "horizontal") return null;
   if (focus.kind === "constellation") {
     const figure = lines?.[focus.id];
@@ -296,7 +300,7 @@ function TargetRing({
   observer,
   when,
 }: {
-  eq: { ra: number; dec: number };
+  eq: Equatorial;
   observer: ObserverLocation;
   when?: Date;
 }) {

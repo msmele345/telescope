@@ -6,11 +6,9 @@
  * convention: +Y = zenith, +X = east, -Z = north).
  */
 
-export interface Vec3 {
-  x: number;
-  y: number;
-  z: number;
-}
+import type { Vec3 } from "@/lib/star-catalog";
+
+export type { Vec3 };
 
 /** Where the camera looks, and its vertical field of view in degrees. */
 export interface CameraView {
