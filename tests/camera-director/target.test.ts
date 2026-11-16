@@ -6,6 +6,7 @@ import {
   CONSTELLATION_FOV_MIN,
   POINT_FOV,
   RESET_FOV,
+  canResolveTarget,
   viewForTarget,
   type Vec3,
 } from "@/lib/camera-director";
@@ -113,5 +114,24 @@ describe("viewForTarget", () => {
 
   it("resets to 75°", () => {
     expect(RESET_FOV).toBe(75);
+  });
+});
+
+describe("canResolveTarget", () => {
+  it("needs the star catalog only for a star", () => {
+    expect(canResolveTarget({ kind: "star", id: 2061 }, { stars: null, lines: LINES })).toBe(false);
+    expect(canResolveTarget({ kind: "star", id: 2061 }, { stars: [BETELGEUSE], lines: null })).toBe(true);
+  });
+
+  it("needs the line figures only for a constellation", () => {
+    expect(canResolveTarget({ kind: "constellation", id: "Ori" }, { stars: [BETELGEUSE], lines: null })).toBe(false);
+    expect(canResolveTarget({ kind: "constellation", id: "Ori" }, { stars: null, lines: LINES })).toBe(true);
+  });
+
+  it("needs neither for a Messier object or a raw altitude/azimuth", () => {
+    expect(canResolveTarget({ kind: "messier", id: "M42" }, { stars: null, lines: null })).toBe(true);
+    expect(
+      canResolveTarget({ kind: "horizontal", alt: 89.3, az: 180, fov: 15 }, { stars: null, lines: null })
+    ).toBe(true);
   });
 });

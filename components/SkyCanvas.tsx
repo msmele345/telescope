@@ -36,6 +36,7 @@ import {
   BASE_PICK_THRESHOLD,
   RESET_FOV,
   applyView,
+  canResolveTarget,
   pickThresholdForFov,
   readView,
   rotateSpeedForFov,
@@ -223,8 +224,7 @@ function CameraDirector({ focus, stars, lines, observer, when }: FocusProps) {
       return;
     }
     // Wait only for the catalog this target is looked up in.
-    if (target.kind === "star" && !stars) return;
-    if (target.kind === "constellation" && !lines) return;
+    if (!canResolveTarget(target, { stars, lines })) return;
     startedKey.current = key;
     const { observer: obs, when: at } = latest.current;
     const catalogs = { stars: stars ?? [], lines: lines ?? {} };

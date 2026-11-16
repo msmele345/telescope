@@ -51,6 +51,22 @@ function fitFov(radius: number, aspect: number): number {
   return Math.max(CONSTELLATION_FOV_MIN, Math.min(CONSTELLATION_FOV_MAX, vertical));
 }
 
+/** Catalogs that may still be loading. */
+export interface LoadingCatalogs {
+  stars: TourCatalogs["stars"] | null;
+  lines: TourCatalogs["lines"] | null;
+}
+
+/**
+ * Whether the catalog `target` is looked up in has arrived. Only stars and
+ * constellations need a fetched catalog; Messier objects are built in.
+ */
+export function canResolveTarget(target: CameraTarget, catalogs: LoadingCatalogs): boolean {
+  if (target.kind === "star") return catalogs.stars !== null;
+  if (target.kind === "constellation") return catalogs.lines !== null;
+  return true;
+}
+
 /**
  * The view that frames `target` for `observer` at `when`, or null when the
  * target's ID is not in its catalog. `aspect` is the canvas width / height.

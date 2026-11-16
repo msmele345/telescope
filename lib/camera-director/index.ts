@@ -19,9 +19,11 @@ export {
   CONSTELLATION_FOV_MAX,
   CONSTELLATION_FOV_MIN,
   POINT_FOV,
+  canResolveTarget,
   skyDirection,
   viewForTarget,
   type CameraTarget,
+  type LoadingCatalogs,
 } from "./target";
 export { applyView, readView, stopMomentum } from "./apply";
 export { CAMERA_HARNESS_ENABLED, parseLookAt } from "./dev-harness";
