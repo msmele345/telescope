@@ -6,7 +6,7 @@ import userEvent from "@testing-library/user-event";
 import type { ConstellationLines } from "@/lib/constellation";
 import type { Star } from "@/lib/star-catalog";
 import { DEFAULT_OBSERVER, type ObserverLocation } from "@/lib/observer";
-import { findTourTime, getTourBySlug, jumpLabel, type Tour } from "@/lib/tours";
+import { findTourTime, formatClock, getTourBySlug, jumpLabel, type Tour } from "@/lib/tours";
 
 // --- Stubs -----------------------------------------------------------------
 
@@ -445,5 +445,41 @@ describe("tour player: the observer", () => {
     expect(actions.toggleViewed).not.toHaveBeenCalled();
     expect(actions.toggleRead).not.toHaveBeenCalled();
     setItem.mockRestore();
+  });
+});
+
+describe("tours list on the map", () => {
+  it("lists the tour with its tour time from the visitor, linking to /?tour=", async () => {
+    const user = userEvent.setup();
+    render(<Home />);
+    await user.click(screen.getByRole("button", { name: "Tours" }));
+    const list = await screen.findByRole("list", { name: "Tours" });
+    const item = within(list)
+      .getAllByRole("listitem")
+      .find((li) => within(li).queryByRole("heading", { name: TOUR.title }));
+    expect(item).toBeDefined();
+    const time = tourTimeFrom(TONIGHT_NOW);
+    expect(item).toHaveTextContent(`Next: Tonight ${formatClock(time.at)}`);
+    expect(within(item!).getByRole("link")).toHaveAttribute("href", "/?tour=orion-fixture");
+  });
+
+  it("finds tour times for the saved observer, not the default", async () => {
+    saveObserver(ARCTIC);
+    const user = userEvent.setup();
+    render(<Home />);
+    await user.click(screen.getByRole("button", { name: "Tours" }));
+    const list = await screen.findByRole("list", { name: "Tours" });
+    expect(within(list).getByText("Not visible from your location")).toBeInTheDocument();
+    expect(within(list).queryByRole("link")).not.toBeInTheDocument();
+  });
+
+  it("closes on Esc without leaving a running tour", async () => {
+    const { user, panel } = await openTour();
+    await user.click(screen.getByRole("button", { name: "Tours" }));
+    await screen.findByRole("list", { name: "Tours" });
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("list", { name: "Tours" })).not.toBeInTheDocument();
+    expect(within(panel).getByText("Stop 1 of 5")).toBeInTheDocument();
+    expect(within(panel).queryByRole("button", { name: "Stay here" })).not.toBeInTheDocument();
   });
 });
