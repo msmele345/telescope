@@ -10,8 +10,8 @@ import { stopDirection, type StopRef, type TourCatalogs } from "@/lib/tours";
 import type { CameraView, Vec3 } from "./interpolate";
 
 /**
- * What the camera can be pointed at: a tour stop's object, or (for the dev
- * harness and anything else that needs it) a raw altitude/azimuth in degrees.
+ * What the camera can be pointed at: a tour stop's object, or (for anything
+ * that needs it) a raw altitude/azimuth in degrees.
  */
 export type CameraTarget =
   | StopRef

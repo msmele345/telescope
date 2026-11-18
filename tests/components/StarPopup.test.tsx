@@ -66,6 +66,16 @@ describe("<StarPopup />", () => {
     expect(link).toHaveAttribute("href", "/login?returnTo=%2F%3Fstar%3D2061");
   });
 
+  it("signs a visitor in back to a given place instead, e.g. the tour that opened it", async () => {
+    render(
+      <StarPopup star={BETELGEUSE} onClose={() => {}} returnTo="/?tour=orion-fixture" />
+    );
+    const link = await screen.findByRole("link", {
+      name: /sign in to favorite this star/i,
+    });
+    expect(link).toHaveAttribute("href", "/login?returnTo=%2F%3Ftour%3Dorion-fixture");
+  });
+
   it("falls back to HR id and hides the Distance row when distance is absent", () => {
     render(<StarPopup star={UNNAMED_STAR} onClose={() => {}} />);
     expect(screen.getByRole("heading", { name: /HR 9999/i })).toBeInTheDocument();

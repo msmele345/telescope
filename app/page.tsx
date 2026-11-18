@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import LocationPrompt from "@/components/LocationPrompt";
 import TimeScrubber from "@/components/TimeScrubber";
@@ -10,11 +10,13 @@ import SkyDirectory from "@/components/SkyDirectory";
 import StarPopup from "@/components/StarPopup";
 import PlanetPopup from "@/components/PlanetPopup";
 import MessierPopup from "@/components/MessierPopup";
-import CameraHarness from "@/components/dev/CameraHarness";
-import { CAMERA_HARNESS_ENABLED, parseLookAt } from "@/lib/camera-director";
+import TourPanel from "@/components/tour/TourPanel";
+import TourNotice from "@/components/tour/TourNotice";
+import { useTourPlayer } from "@/components/tour/useTourPlayer";
 import { loadCatalog, type Star } from "@/lib/star-catalog";
 import type { SolarBody } from "@/lib/solar-system";
-import type { MessierObject } from "@/lib/messier";
+import { getMessierById, type MessierObject } from "@/lib/messier";
+import { jumpLabel, returnLabel } from "@/lib/tours";
 import {
   DEFAULT_OBSERVER,
   loadSavedObserver,
@@ -30,10 +32,13 @@ const SkyCanvas = dynamic(() => import("@/components/SkyCanvas"), {
 // At 60x/3600x the sky still moves smoothly at 4Hz; 1x is visually identical.
 const SKY_UPDATE_HZ = 4;
 
+/** `tourSlug` marks a popup the tour opened, rather than the visitor. */
 type Selection =
-  | { kind: "star"; data: Star }
+  | { kind: "star"; data: Star; tourSlug?: string }
   | { kind: "planet"; data: SolarBody }
-  | { kind: "messier"; data: MessierObject };
+  | { kind: "messier"; data: MessierObject; tourSlug?: string };
+
+const TOUR_LOCKED_REASON = "Time is set by the tour. Exit to change it.";
 
 export default function Home() {
   const [observer, setObserver] = useState<SavedObserver | null>(null);
@@ -41,15 +46,70 @@ export default function Home() {
   const [when, setWhen] = useState<Date>(() => new Date(controller.getVirtualMs()));
   const [selection, setSelection] = useState<Selection | null>(null);
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const focusStarParam = searchParams.get("star");
-  // Dev/preview-only camera harness: /?lookAt=M42 (see CAMERA_HARNESS_ENABLED).
-  const lookAtParam = CAMERA_HARNESS_ENABLED ? searchParams.get("lookAt") : null;
-  const cameraFocus = useMemo(() => parseLookAt(lookAtParam), [lookAtParam]);
+  const tourParam = searchParams.get("tour");
 
   useEffect(() => {
     const saved = loadSavedObserver();
     if (saved) setObserver(saved);
   }, []);
+
+  // The tour reads the observer when it starts, which can be before the
+  // saved one has reached state, so fall back to reading it directly.
+  const observerRef = useRef(observer);
+  observerRef.current = observer;
+  const getObserver = useCallback(
+    () => observerRef.current ?? loadSavedObserver() ?? DEFAULT_OBSERVER,
+    []
+  );
+
+  // A replace, not a push, so a refresh or Back doesn't restart the tour.
+  const searchRef = useRef(searchParams);
+  searchRef.current = searchParams;
+  const clearTourParam = useCallback(() => {
+    const params = new URLSearchParams(searchRef.current.toString());
+    params.delete("tour");
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }, [router, pathname]);
+
+  const tour = useTourPlayer({ slug: tourParam, controller, getObserver, clearTourParam });
+  const activeTour = tour.state.status === "active" ? tour.state : null;
+  const tourStop = activeTour ? activeTour.tour.stops[activeTour.stop] : null;
+  const tourSlug = activeTour?.tour.slug ?? null;
+
+  // What the camera points at: the current stop, or nothing (75°) otherwise.
+  const tourStopKind = tourStop?.kind;
+  const tourStopId = tourStop?.id;
+  const cameraFocus = useMemo(() => {
+    if (tourStopKind === "star") return { kind: "star" as const, id: tourStopId as number };
+    if (tourStopKind === "messier") return { kind: "messier" as const, id: tourStopId as string };
+    if (tourStopKind === "constellation") {
+      return { kind: "constellation" as const, id: tourStopId as string };
+    }
+    return null;
+  }, [tourStopKind, tourStopId]);
+
+  // Star and Messier stops open their popup; a constellation stop, or the
+  // end of the tour, closes one the tour opened.
+  const tourStars = activeTour?.catalogs.stars;
+  useEffect(() => {
+    if (!tourSlug || !tourStopKind) {
+      setSelection((s) => (s && "tourSlug" in s && s.tourSlug ? null : s));
+      return;
+    }
+    if (tourStopKind === "star") {
+      const star = tourStars?.find((s) => s.id === tourStopId);
+      setSelection(star ? { kind: "star", data: star, tourSlug } : null);
+    } else if (tourStopKind === "messier") {
+      const object = getMessierById(tourStopId as string);
+      setSelection(object ? { kind: "messier", data: object, tourSlug } : null);
+    } else {
+      setSelection(null);
+    }
+  }, [tourSlug, tourStopKind, tourStopId, tourStars]);
 
   // Deep-link: when navigated to /?star=ID (e.g. from /profile), look up the
   // star in the catalog and open its popup. Cancellable so a fast nav doesn't
@@ -137,12 +197,39 @@ export default function Home() {
         onSelectMessier={handleSelectMessier}
         focus={cameraFocus}
       />
-      {CAMERA_HARNESS_ENABLED && <CameraHarness />}
       <SkyDirectory onSelectStar={handleSelectStar} />
       <LocationPrompt observer={observer} onResolve={handleResolve} />
-      <TimeScrubber controller={controller} />
+      <TimeScrubber
+        controller={controller}
+        lockedReason={activeTour ? TOUR_LOCKED_REASON : undefined}
+      />
+      {activeTour && (
+        <TourPanel
+          tour={activeTour.tour}
+          stop={activeTour.stop}
+          leaving={activeTour.leaving}
+          jumpNote={activeTour.time.tonight ? null : jumpLabel(activeTour.time.at)}
+          returnText={returnLabel(activeTour.saved, new Date(controller.getRealMs()))}
+          popupOpen={selection !== null}
+          onNext={tour.next}
+          onBack={tour.back}
+          onRequestLeave={tour.requestLeave}
+          onCancelLeave={tour.cancelLeave}
+          onLeave={tour.leave}
+        />
+      )}
+      {tour.state.status === "unavailable" && (
+        <TourNotice
+          message={`${tour.state.tour.title} isn't visible from your location`}
+          onDismiss={tour.dismissNotice}
+        />
+      )}
       {selection?.kind === "star" && (
-        <StarPopup star={selection.data} onClose={handleClosePopup} />
+        <StarPopup
+          star={selection.data}
+          onClose={handleClosePopup}
+          returnTo={selection.tourSlug ? `/?tour=${selection.tourSlug}` : undefined}
+        />
       )}
       {selection?.kind === "planet" && (
         <PlanetPopup body={selection.data} onClose={handleClosePopup} />
