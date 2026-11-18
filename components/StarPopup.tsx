@@ -15,9 +15,14 @@ import { actionRowStyle } from "./user/styles";
 export interface StarPopupProps {
   star: Star | null;
   onClose: () => void;
+  /**
+   * Where signing in from this popup returns to. Defaults to `/?star=ID`,
+   * which reopens it; a popup opened by a tour passes `/?tour=<slug>`.
+   */
+  returnTo?: string;
 }
 
-export default function StarPopup({ star, onClose }: StarPopupProps) {
+export default function StarPopup({ star, onClose, returnTo }: StarPopupProps) {
   if (!star) return null;
 
   const constellation = getConstellationByAbbr(star.constellation);
@@ -38,7 +43,7 @@ export default function StarPopup({ star, onClose }: StarPopupProps) {
               type="star"
               targetId={String(star.id)}
               signInHint="to favorite this star"
-              returnTo={`/?star=${star.id}`}
+              returnTo={returnTo ?? `/?star=${star.id}`}
             />
           </div>
           {constellation && (

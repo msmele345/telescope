@@ -16,7 +16,14 @@ import {
 
 export interface TimeScrubberProps {
   controller: TimeController;
+  /**
+   * When set, the time is owned by something else (a tour): every control is
+   * disabled, the readout still shows the virtual time, and this text says why.
+   */
+  lockedReason?: string;
 }
+
+const LOCKED_REASON_ID = "time-scrubber-locked-reason";
 
 const SPEED_LABELS: Record<SpeedMultiplier, string> = {
   1: "1×",
@@ -24,7 +31,8 @@ const SPEED_LABELS: Record<SpeedMultiplier, string> = {
   3600: "3600×",
 };
 
-export default function TimeScrubber({ controller }: TimeScrubberProps) {
+export default function TimeScrubber({ controller, lockedReason }: TimeScrubberProps) {
+  const locked = Boolean(lockedReason);
   const [snapshot, setSnapshot] = useState<TimeSnapshot>(() =>
     controller.snapshot()
   );
@@ -79,11 +87,23 @@ export default function TimeScrubber({ controller }: TimeScrubberProps) {
   const isPlaying = snapshot.mode === "running";
 
   return (
-    <div style={rootStyle} role="group" aria-label="Time controls">
+    <div
+      style={locked ? { ...rootStyle, ...lockedRootStyle } : rootStyle}
+      role="group"
+      aria-label="Time controls"
+      title={lockedReason}
+      aria-describedby={locked ? LOCKED_REASON_ID : undefined}
+    >
+      {locked && (
+        <span id={LOCKED_REASON_ID} style={visuallyHiddenStyle}>
+          {lockedReason}
+        </span>
+      )}
       <button
         type="button"
+        disabled={locked}
         onClick={handleTogglePlay}
-        style={playButtonStyle}
+        style={lockable(playButtonStyle, locked)}
         aria-label={isPlaying ? "Pause" : "Play"}
         aria-pressed={isPlaying}
       >
@@ -99,11 +119,12 @@ export default function TimeScrubber({ controller }: TimeScrubberProps) {
               type="button"
               role="radio"
               aria-checked={selected}
+              disabled={locked}
               onClick={() => handleSpeed(speed)}
-              style={{
-                ...speedButtonStyle,
-                ...(selected ? speedButtonSelectedStyle : null),
-              }}
+              style={lockable(
+                { ...speedButtonStyle, ...(selected ? speedButtonSelectedStyle : null) },
+                locked
+              )}
             >
               {SPEED_LABELS[speed]}
             </button>
@@ -111,12 +132,13 @@ export default function TimeScrubber({ controller }: TimeScrubberProps) {
         })}
       </div>
 
-      <DateTimePicker value={virtualDate} onChange={handlePick} />
+      <DateTimePicker value={virtualDate} onChange={handlePick} disabled={locked} />
 
       <button
         type="button"
+        disabled={locked}
         onClick={handleReset}
-        style={nowButtonStyle}
+        style={lockable(nowButtonStyle, locked)}
         aria-label="Reset to now"
       >
         Now
@@ -132,9 +154,10 @@ export default function TimeScrubber({ controller }: TimeScrubberProps) {
 interface DateTimePickerProps {
   value: Date;
   onChange: (value: string) => void;
+  disabled?: boolean;
 }
 
-function DateTimePicker({ value, onChange }: DateTimePickerProps) {
+function DateTimePicker({ value, onChange, disabled }: DateTimePickerProps) {
   const displayed = useMemo(() => toLocalInputValue(value), [value]);
   // Keep an internal buffer so rapid RAF-driven updates to the readout don't
   // fight the user mid-edit.
@@ -149,6 +172,7 @@ function DateTimePicker({ value, onChange }: DateTimePickerProps) {
     <input
       type="datetime-local"
       aria-label="Pick date and time"
+      disabled={disabled}
       value={buffer}
       step={1}
       onFocus={() => {
@@ -162,7 +186,7 @@ function DateTimePicker({ value, onChange }: DateTimePickerProps) {
         setBuffer(e.target.value);
         onChange(e.target.value);
       }}
-      style={pickerStyle}
+      style={lockable(pickerStyle, Boolean(disabled))}
     />
   );
 }
@@ -211,6 +235,29 @@ const rootStyle: React.CSSProperties = {
   maxWidth: "96vw",
   flexWrap: "wrap",
   justifyContent: "center",
+};
+
+// Controls are disabled, not hidden: the readout still shows the tour time.
+const lockedRootStyle: React.CSSProperties = {
+  opacity: 0.75,
+  cursor: "not-allowed",
+};
+
+/**
+ * A locked control lets the pointer through to the group, whose `title`
+ * carries the reason: not every browser shows a tooltip over a disabled one.
+ */
+function lockable(style: React.CSSProperties, locked: boolean): React.CSSProperties {
+  return locked ? { ...style, pointerEvents: "none" } : style;
+}
+
+const visuallyHiddenStyle: React.CSSProperties = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  overflow: "hidden",
+  clip: "rect(0 0 0 0)",
+  whiteSpace: "nowrap",
 };
 
 const playButtonStyle: React.CSSProperties = {

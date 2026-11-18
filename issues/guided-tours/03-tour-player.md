@@ -32,17 +32,17 @@ Component tests with the canvas stubbed and a fake clock. Build test-first.
 
 **Blocked by:** #1 Tour format and the time-finder, #2 Point and zoom the view from code.
 
-- [ ] `/?tour=<slug>` starts the tour at stop 1 with no confirmation step; an unknown slug does nothing.
-- [ ] The observer (state, localStorage and DB) is never modified by a tour.
-- [ ] Next / Back / ← / → move between stops; Esc exits.
-- [ ] The scrubber is disabled during a tour and shows the tour time.
-- [ ] Exit → "Return" restores the previous play mode, speed and offset from real time; "Stay" keeps the tour time.
-- [ ] A map that was live before the tour is live again after "Return", with the clock advanced during the tour.
-- [ ] Either exit choice removes `?tour=` from the URL.
-- [ ] A tour with no tour time shows the notice, doesn't start, and leaves time and view untouched.
-- [ ] Signing in from a popup opened by a tour returns to `/?tour=<slug>`.
-- [ ] A tour whose next evening isn't tonight shows the jump label with the night-of date.
-- [ ] Star and Messier stops open their popup; constellation stops link to the lesson.
-- [ ] Works with no saved location, and the location banner is unchanged.
-- [ ] Full test suite passes; `next build` succeeds.
-- [ ] **Verified on a Vercel preview deploy** with the fixture tour, end to end.
+- [x] `/?tour=<slug>` starts the tour at stop 1 with no confirmation step; an unknown slug does nothing.
+- [x] The observer (state, localStorage and DB) is never modified by a tour.
+- [x] Next / Back / ← / → move between stops; Esc exits.
+- [x] The scrubber is disabled during a tour and shows the tour time.
+- [x] Exit → "Return" restores the previous play mode, speed and offset from real time; "Stay" keeps the tour time.
+- [x] A map that was live before the tour is live again after "Return", with the clock advanced during the tour.
+- [x] Either exit choice removes `?tour=` from the URL.
+- [x] A tour with no tour time shows the notice, doesn't start, and leaves time and view untouched.
+- [x] Signing in from a popup opened by a tour returns to `/?tour=<slug>`.
+- [x] A tour whose next evening isn't tonight shows the jump label with the night-of date.
+- [x] Star and Messier stops open their popup; constellation stops link to the lesson.
+- [x] Works with no saved location, and the location banner is unchanged.
+- [x] Full test suite passes; `next build` succeeds.
+- [x] **Verified on a Vercel preview deploy** with the fixture tour, end to end.

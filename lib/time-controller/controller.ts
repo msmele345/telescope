@@ -46,6 +46,11 @@ export class TimeController {
     };
   }
 
+  /** The controller's real-time clock, ms. */
+  getRealMs(): number {
+    return this.now();
+  }
+
   getVirtualMs(realNow = this.now()): number {
     return virtualAt(this.state, realNow);
   }

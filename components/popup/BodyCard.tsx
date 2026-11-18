@@ -13,6 +13,12 @@ export interface BodyCardProps {
 }
 
 /**
+ * Clicks inside an element with this attribute don't dismiss a popup: it
+ * marks UI that works alongside one, such as the tour panel that opened it.
+ */
+export const POPUP_COMPANION_ATTR = "data-popup-companion";
+
+/**
  * Shared chrome for popups that describe a clickable sky object: card
  * positioning, close button, escape + click-outside dismiss, dl layout.
  * Each caller supplies the body-specific fields as `children`.
@@ -30,7 +36,9 @@ const BodyCard = forwardRef<HTMLDivElement, BodyCardProps>(function BodyCard(
     };
     const onPointer = (e: MouseEvent) => {
       const node = cardRef.current;
-      if (node && !node.contains(e.target as Node)) onClose();
+      const target = e.target as Element | null;
+      if (target?.closest?.(`[${POPUP_COMPANION_ATTR}]`)) return;
+      if (node && !node.contains(target)) onClose();
     };
     window.addEventListener("keydown", onKey);
     window.addEventListener("mousedown", onPointer);

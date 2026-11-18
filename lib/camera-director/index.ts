@@ -26,4 +26,3 @@ export {
   type LoadingCatalogs,
 } from "./target";
 export { applyView, readView, stopMomentum } from "./apply";
-export { CAMERA_HARNESS_ENABLED, parseLookAt } from "./dev-harness";

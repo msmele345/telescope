@@ -116,4 +116,42 @@ describe("<TimeScrubber />", () => {
     advance(10_000);
     expect(controller.getVirtualMs()).toBe(T0 + 60_000);
   });
+
+  describe("locked", () => {
+    const REASON = "Time is set by the tour. Exit to change it.";
+
+    it("disables play, speed, the picker and Now, and explains why", () => {
+      const { controller } = mkController();
+      controller.pause();
+      render(<TimeScrubber controller={controller} lockedReason={REASON} />);
+
+      expect(screen.getByRole("button", { name: /play/i })).toBeDisabled();
+      for (const radio of screen.getAllByRole("radio")) expect(radio).toBeDisabled();
+      expect(screen.getByLabelText(/pick date and time/i)).toBeDisabled();
+      expect(screen.getByRole("button", { name: /reset to now/i })).toBeDisabled();
+
+      const group = screen.getByRole("group", { name: /time controls/i });
+      expect(group).toHaveAttribute("title", REASON);
+      expect(group).toHaveAccessibleDescription(REASON);
+    });
+
+    it("still shows the virtual time it is locked to", () => {
+      const { controller } = mkController();
+      controller.pause();
+      controller.scrubTo(Date.UTC(2026, 11, 8, 4, 30));
+      render(<TimeScrubber controller={controller} lockedReason={REASON} />);
+      expect(screen.getByText("2026-12-08 04:30:00 UTC")).toBeInTheDocument();
+    });
+
+    it("leaves the controller alone when its controls are clicked", async () => {
+      // Locked controls let the pointer through to the group; click them anyway.
+      const user = userEvent.setup({ pointerEventsCheck: 0 });
+      const { controller } = mkController();
+      controller.pause();
+      render(<TimeScrubber controller={controller} lockedReason={REASON} />);
+      await user.click(screen.getByRole("button", { name: /play/i }));
+      await user.click(screen.getByRole("radio", { name: /60×/ }));
+      expect(controller.snapshot()).toMatchObject({ mode: "paused", speed: 1 });
+    });
+  });
 });
