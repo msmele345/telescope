@@ -45,4 +45,4 @@ Component tests with the canvas stubbed and a fake clock. Build test-first.
 - [x] Star and Messier stops open their popup; constellation stops link to the lesson.
 - [x] Works with no saved location, and the location banner is unchanged.
 - [x] Full test suite passes; `next build` succeeds.
-- [ ] **Verified on a Vercel preview deploy** with the fixture tour, end to end.
+- [x] **Verified on a Vercel preview deploy** with the fixture tour, end to end.
