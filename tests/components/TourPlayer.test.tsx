@@ -137,7 +137,7 @@ describe("tour player: starting", () => {
     const { panel } = await openTour();
     expect(within(panel).getByRole("heading", { name: "Orion, the Hunter" })).toBeInTheDocument();
     expect(within(panel).getByText("Stop 1 of 5")).toBeInTheDocument();
-    expect(canvas.props?.focus).toEqual({ kind: "constellation", id: "Ori" });
+    expect(canvas.props?.focus).toMatchObject({ kind: "constellation", id: "Ori" });
   });
 
   it("sets the virtual time to the tour time, paused", async () => {
@@ -205,7 +205,45 @@ describe("tour player: no tour time", () => {
   });
 });
 
+describe("tour player: a second tour", () => {
+  it("leaves the running tour alone when the next one isn't visible", async () => {
+    const time = tourTimeFrom(TONIGHT_NOW);
+    const { user, view, panel } = await openTour();
+    await user.click(within(panel).getByRole("button", { name: "Next" }));
+
+    // The visitor's location changes to one the tour can't be seen from,
+    // then the tour link is opened again.
+    saveObserver(ARCTIC);
+    nav.search = "";
+    view.rerender(<Home />);
+    nav.search = "?tour=orion-fixture";
+    view.rerender(<Home />);
+
+    expect(
+      await screen.findByText("Around Orion isn't visible from your location")
+    ).toBeInTheDocument();
+    const still = screen.getByRole("region", { name: /tour: around orion/i });
+    expect(within(still).getByText("Stop 2 of 5")).toBeInTheDocument();
+    expect(scrubberGroup()).toHaveAttribute("title", "Time is set by the tour. Exit to change it.");
+    expect(within(scrubberGroup()).getByText(readout(time.at.getTime()))).toBeInTheDocument();
+    await user.click(within(still).getByRole("button", { name: "Exit" }));
+    expect(within(still).getByRole("button", { name: "Return to now" })).toBeInTheDocument();
+  });
+});
+
 describe("tour player: moving between stops", () => {
+  it("moves focus to the panel when the tour starts", async () => {
+    const { panel } = await openTour();
+    expect(panel).toHaveFocus();
+  });
+
+  it("keeps a tour popup open when the panel itself is clicked", async () => {
+    const { user, panel } = await openTour();
+    await user.click(within(panel).getByRole("button", { name: "Next" }));
+    await user.click(within(panel).getByRole("heading", { name: "Betelgeuse" }));
+    expect(screen.getByRole("dialog", { name: "Betelgeuse" })).toBeInTheDocument();
+  });
+
   it("moves with Next and Back", async () => {
     const { user, panel } = await openTour();
     const back = within(panel).getByRole("button", { name: "Back" });
@@ -214,7 +252,7 @@ describe("tour player: moving between stops", () => {
     await user.click(within(panel).getByRole("button", { name: "Next" }));
     expect(within(panel).getByRole("heading", { name: "Betelgeuse" })).toBeInTheDocument();
     expect(within(panel).getByText("Stop 2 of 5")).toBeInTheDocument();
-    expect(canvas.props?.focus).toEqual({ kind: "star", id: 2061 });
+    expect(canvas.props?.focus).toMatchObject({ kind: "star", id: 2061 });
 
     await user.click(within(panel).getByRole("button", { name: "Back" }));
     expect(within(panel).getByRole("heading", { name: "Orion, the Hunter" })).toBeInTheDocument();

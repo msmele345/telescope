@@ -17,8 +17,6 @@ import { loadTourCatalogs } from "@/lib/tours/load-catalogs";
 
 export type TourPlayerState =
   | { status: "idle" }
-  /** The tour has no tour time from this observer, so it did not start. */
-  | { status: "unavailable"; tour: Tour }
   | {
       status: "active";
       tour: Tour;
@@ -56,20 +54,25 @@ export function useTourPlayer({
   clearTourParam,
 }: UseTourPlayerOptions) {
   const [state, setState] = useState<TourPlayerState>({ status: "idle" });
+  /**
+   * A tour that has no tour time from this observer, so it did not start.
+   * Kept apart from `state`: a tour already running carries on untouched.
+   */
+  const [unavailable, setUnavailable] = useState<Tour | null>(null);
 
   // Callbacks and state read inside the async start, without restarting it.
   const latest = useRef({ getObserver, clearTourParam, state });
   latest.current = { getObserver, clearTourParam, state };
 
-  /** The slug last acted on, so a re-render never restarts a tour. */
-  const handled = useRef<string | null>(null);
+  /** The `?tour=` value last acted on, so a re-render never restarts a tour. */
+  const startedSlug = useRef<string | null>(null);
 
   useEffect(() => {
     if (!slug) {
-      handled.current = null;
+      startedSlug.current = null;
       return;
     }
-    if (handled.current === slug) return;
+    if (startedSlug.current === slug) return;
     const tour = getTourBySlug(slug);
     if (!tour) return; // An unknown slug is ignored.
 
@@ -77,14 +80,15 @@ export function useTourPlayer({
     loadTourCatalogs()
       .then((catalogs) => {
         if (cancelled) return;
-        handled.current = slug;
+        startedSlug.current = slug;
         const now = new Date(controller.getRealMs());
         const time = findTourTime(tour, latest.current.getObserver(), now, catalogs);
         if (!time) {
-          setState({ status: "unavailable", tour });
+          setUnavailable(tour);
           latest.current.clearTourParam();
           return;
         }
+        setUnavailable(null);
         // A tour started from inside another keeps the time from before both.
         const prev = latest.current.state;
         const fresh = enterTourTime(controller, time.at);
@@ -135,10 +139,7 @@ export function useTourPlayer({
     [controller]
   );
 
-  const dismissNotice = useCallback(
-    () => setState((s) => (s.status === "unavailable" ? { status: "idle" } : s)),
-    []
-  );
+  const dismissNotice = useCallback(() => setUnavailable(null), []);
 
-  return { state, next, back, requestLeave, cancelLeave, leave, dismissNotice };
+  return { state, unavailable, next, back, requestLeave, cancelLeave, leave, dismissNotice };
 }

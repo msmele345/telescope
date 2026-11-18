@@ -124,4 +124,12 @@ describe("TimeController", () => {
     });
     expect(c.getVirtualMs()).toBe(42);
   });
+
+  it("reports its real-time clock", () => {
+    let t = 1_000;
+    const controller = new TimeController({ now: () => t });
+    expect(controller.getRealMs()).toBe(1_000);
+    t = 5_000;
+    expect(controller.getRealMs()).toBe(5_000);
+  });
 });

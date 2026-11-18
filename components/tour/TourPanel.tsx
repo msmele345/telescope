@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { getConstellationByAbbr } from "@/lib/constellation";
 import type { Tour } from "@/lib/tours";
+import { POPUP_COMPANION_ATTR } from "../popup/BodyCard";
 import TourMarkdown from "./TourMarkdown";
 import type { LeaveChoice } from "./useTourPlayer";
 
@@ -50,13 +51,14 @@ export default function TourPanel({
   const lesson =
     current.kind === "constellation" ? getConstellationByAbbr(current.id) : undefined;
 
-  const keys = useRef({ leaving, popupOpen, onNext, onBack, onRequestLeave, onCancelLeave });
-  keys.current = { leaving, popupOpen, onNext, onBack, onRequestLeave, onCancelLeave };
+  // The key handler is bound once; it reads the latest props from here.
+  const latestProps = useRef({ leaving, popupOpen, onNext, onBack, onRequestLeave, onCancelLeave });
+  latestProps.current = { leaving, popupOpen, onNext, onBack, onRequestLeave, onCancelLeave };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || isTyping(e.target)) return;
-      const k = keys.current;
+      const k = latestProps.current;
       if (e.key === "Escape") {
         // An open popup closes on this Esc; the next one leaves the tour.
         if (k.popupOpen) return;
@@ -74,13 +76,25 @@ export default function TourPanel({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // Focus the panel when the tour starts, so keyboard and screen-reader
+  // users land on it; focus the first choice when asked to leave.
+  const panelRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    panelRef.current?.focus();
+  }, []);
   const returnRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (leaving) returnRef.current?.focus();
   }, [leaving]);
 
   return (
-    <section aria-label={`Tour: ${tour.title}`} style={panelStyle}>
+    <section
+      ref={panelRef}
+      tabIndex={-1}
+      aria-label={`Tour: ${tour.title}`}
+      style={panelStyle}
+      {...{ [POPUP_COMPANION_ATTR]: "" }}
+    >
       <div style={eyebrowStyle}>
         <span>{tour.title}</span>
         <span>
@@ -162,6 +176,7 @@ const panelStyle: React.CSSProperties = {
   backdropFilter: "blur(8px)",
   zIndex: 11,
   boxSizing: "border-box",
+  outline: "none",
 };
 
 const eyebrowStyle: React.CSSProperties = {

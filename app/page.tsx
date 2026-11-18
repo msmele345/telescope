@@ -80,36 +80,28 @@ export default function Home() {
   const tourStop = activeTour ? activeTour.tour.stops[activeTour.stop] : null;
   const tourSlug = activeTour?.tour.slug ?? null;
 
-  // What the camera points at: the current stop, or nothing (75°) otherwise.
-  const tourStopKind = tourStop?.kind;
-  const tourStopId = tourStop?.id;
-  const cameraFocus = useMemo(() => {
-    if (tourStopKind === "star") return { kind: "star" as const, id: tourStopId as number };
-    if (tourStopKind === "messier") return { kind: "messier" as const, id: tourStopId as string };
-    if (tourStopKind === "constellation") {
-      return { kind: "constellation" as const, id: tourStopId as string };
-    }
-    return null;
-  }, [tourStopKind, tourStopId]);
+  // The camera points at the current stop (a stop is a camera target), and
+  // zooms back out to 75° when there is none.
+  const cameraFocus = tourStop;
 
   // Star and Messier stops open their popup; a constellation stop, or the
   // end of the tour, closes one the tour opened.
   const tourStars = activeTour?.catalogs.stars;
   useEffect(() => {
-    if (!tourSlug || !tourStopKind) {
+    if (!tourSlug || !tourStop) {
       setSelection((s) => (s && "tourSlug" in s && s.tourSlug ? null : s));
       return;
     }
-    if (tourStopKind === "star") {
-      const star = tourStars?.find((s) => s.id === tourStopId);
+    if (tourStop.kind === "star") {
+      const star = tourStars?.find((s) => s.id === tourStop.id);
       setSelection(star ? { kind: "star", data: star, tourSlug } : null);
-    } else if (tourStopKind === "messier") {
-      const object = getMessierById(tourStopId as string);
+    } else if (tourStop.kind === "messier") {
+      const object = getMessierById(tourStop.id);
       setSelection(object ? { kind: "messier", data: object, tourSlug } : null);
     } else {
       setSelection(null);
     }
-  }, [tourSlug, tourStopKind, tourStopId, tourStars]);
+  }, [tourSlug, tourStop, tourStars]);
 
   // Deep-link: when navigated to /?star=ID (e.g. from /profile), look up the
   // star in the catalog and open its popup. Cancellable so a fast nav doesn't
@@ -218,9 +210,9 @@ export default function Home() {
           onLeave={tour.leave}
         />
       )}
-      {tour.state.status === "unavailable" && (
+      {tour.unavailable && (
         <TourNotice
-          message={`${tour.state.tour.title} isn't visible from your location`}
+          message={`${tour.unavailable.title} isn't visible from your location`}
           onDismiss={tour.dismissNotice}
         />
       )}
