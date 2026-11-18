@@ -17,28 +17,25 @@ export interface TourWindow {
   to: MonthDay;
 }
 
-export type TourStop =
+/** The object a stop points at, without its commentary. */
+export type StopRef =
   | {
       kind: "constellation";
       /** IAU abbreviation, e.g. "Ori". */
       id: string;
-      heading: string;
-      body: string;
     }
   | {
       kind: "star";
       /** BSC catalog id, e.g. 2061 for Betelgeuse. */
       id: number;
-      heading: string;
-      body: string;
     }
   | {
       kind: "messier";
       /** Messier display id, e.g. "M42". */
       id: string;
-      heading: string;
-      body: string;
     };
+
+export type TourStop = StopRef & { heading: string; body: string };
 
 export interface Tour {
   /** Matches the file name in `content/tours/`. */

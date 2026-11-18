@@ -28,13 +28,13 @@ test-first. Remove any dev-only entry point before merge, or gate it out of prod
 
 **Blocked by:** None. Can start immediately.
 
-- [ ] Pure interpolation tests: shortest-arc direction, FOV easing, endpoints exact, reduced-motion is instant.
-- [ ] Per-kind target tests: the direction and FOV produced for a constellation, a star and a Messier object.
-- [ ] The view moves smoothly to a target and the FOV narrows. Dragging works again once it settles.
-- [ ] Clicking a star while zoomed to 15° selects that star.
-- [ ] Pure tests: the drag-speed factor for a given FOV, and a target within 1° of the zenith ends finite and exact.
-- [ ] Dragging at 15° moves the sky the same distance on screen as at 75°.
-- [ ] A transition to a target within 1° of the zenith ends settled, and dragging works afterwards.
-- [ ] The scroll wheel still does not zoom.
-- [ ] Full test suite passes; `next build` succeeds.
+- [x] Pure interpolation tests: shortest-arc direction, FOV easing, endpoints exact, reduced-motion is instant.
+- [x] Per-kind target tests: the direction and FOV produced for a constellation, a star and a Messier object.
+- [x] The view moves smoothly to a target and the FOV narrows. Dragging works again once it settles.
+- [x] Clicking a star while zoomed to 15° selects that star.
+- [x] Pure tests: the drag-speed factor for a given FOV, and a target within 1° of the zenith ends finite and exact.
+- [x] Dragging at 15° moves the sky the same distance on screen as at 75°.
+- [x] A transition to a target within 1° of the zenith ends settled, and dragging works afterwards.
+- [x] The scroll wheel still does not zoom.
+- [x] Full test suite passes; `next build` succeeds.
 - [ ] **Checked on a Vercel preview deploy:** the transition holds 60 fps on a laptop.
