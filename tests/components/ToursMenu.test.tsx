@@ -65,7 +65,7 @@ function timeOf(t: Tour, observer: ObserverLocation = DEFAULT_OBSERVER) {
 
 function renderMenu() {
   const user = userEvent.setup();
-  render(<ToursMenu tours={TOURS} getObserver={() => DEFAULT_OBSERVER} getNow={() => NOW} />);
+  render(<ToursMenu tours={TOURS} getObserver={() => DEFAULT_OBSERVER} getRealNow={() => NOW} />);
   return { user, toggle: screen.getByRole("button", { name: "Tours" }) };
 }
 
@@ -91,6 +91,8 @@ describe("ToursMenu", () => {
 
   it("lists every tour as a list, soonest tour time first, unseeable last", async () => {
     const { list, toggle } = await openList();
+    // Explicit, so Safari keeps list semantics on an unstyled list.
+    expect(list).toHaveAttribute("role", "list");
     expect(toggle).toHaveAttribute("aria-expanded", "true");
     const items = within(list).getAllByRole("listitem");
     expect(items.map((li) => within(li).getByRole("heading").textContent)).toEqual([
@@ -135,7 +137,7 @@ describe("ToursMenu", () => {
     const north = { lat: 49, lng: -97 };
     const user = userEvent.setup();
     const getObserver = vi.fn(() => north);
-    render(<ToursMenu tours={[ORION]} getObserver={getObserver} getNow={() => NOW} />);
+    render(<ToursMenu tours={[ORION]} getObserver={getObserver} getRealNow={() => NOW} />);
     await user.click(screen.getByRole("button", { name: "Tours" }));
     const item = (await screen.findAllByRole("listitem"))[0];
     expect(getObserver).toHaveBeenCalled();
@@ -164,14 +166,25 @@ describe("ToursMenu", () => {
       expect(first).toHaveFocus();
     });
 
-    it("moves between tours with the arrow keys", async () => {
+    it("moves between tours with the arrow keys, stopping at the ends", async () => {
       const { user, list } = await openList();
       const links = within(list).getAllByRole("link");
+      expect(links[0]).toHaveFocus();
+      await user.keyboard("{ArrowUp}");
       expect(links[0]).toHaveFocus();
       await user.keyboard("{ArrowDown}");
       expect(links[1]).toHaveFocus();
       await user.keyboard("{ArrowUp}");
       expect(links[0]).toHaveFocus();
+    });
+
+    it("reaches a tour that can't be started, so its reason is read out", async () => {
+      const { user, list } = await openList();
+      const southern = within(list).getAllByRole("listitem")[3];
+      await user.keyboard("{ArrowDown}{ArrowDown}{ArrowDown}");
+      expect(southern.firstElementChild).toHaveFocus();
+      await user.keyboard("{ArrowDown}");
+      expect(southern.firstElementChild).toHaveFocus();
     });
 
     it("closes on Esc and returns focus to the Tours button", async () => {

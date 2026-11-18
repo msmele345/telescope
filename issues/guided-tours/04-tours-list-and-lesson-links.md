@@ -19,11 +19,11 @@ The constellation-to-tours lookup is a pure function over the registry. Test it 
 
 **Blocked by:** #3 The tour player and `/?tour=` links.
 
-- [ ] The Tours button lists every registered tour with its next tour time, sorted soonest first.
-- [ ] A tour time after 12am on the clock but before solar midnight is labelled "Tonight".
-- [ ] A tour with no tour time is listed last, reads "Not visible from your location", and can't be started.
-- [ ] Choosing a tour starts it (via `/?tour=`).
-- [ ] The list is keyboard-operable and announces as a list to screen readers.
-- [ ] Pure test: the constellation → tours lookup, including star and Messier stops mapping to their parent constellation.
-- [ ] Lesson pages show "Appears in" links only when the constellation is in a tour.
-- [ ] Full test suite passes; `next build` succeeds.
+- [x] The Tours button lists every registered tour with its next tour time, sorted soonest first.
+- [x] A tour time after 12am on the clock but before solar midnight is labelled "Tonight".
+- [x] A tour with no tour time is listed last, reads "Not visible from your location", and can't be started.
+- [x] Choosing a tour starts it (via `/?tour=`).
+- [x] The list is keyboard-operable and announces as a list to screen readers.
+- [x] Pure test: the constellation → tours lookup, including star and Messier stops mapping to their parent constellation.
+- [x] Lesson pages show "Appears in" links only when the constellation is in a tour.
+- [x] Full test suite passes; `next build` succeeds.

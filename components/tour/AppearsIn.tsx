@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { Tour } from "@/lib/tours";
+import { tourHref, type Tour } from "@/lib/tours";
 
 export interface AppearsInProps {
   /** The tours with a stop in this constellation. */
@@ -13,7 +13,7 @@ export default function AppearsIn({ tours }: AppearsInProps) {
     <nav aria-label="Tours" style={rowStyle}>
       <span style={labelStyle}>Appears in:</span>
       {tours.map((tour) => (
-        <Link key={tour.slug} href={`/?tour=${tour.slug}`} style={linkStyle}>
+        <Link key={tour.slug} href={tourHref(tour.slug)} style={linkStyle}>
           {tour.title} →
         </Link>
       ))}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nextTourLabel, sortByTourTime, type Tour, type TourTime } from "@/lib/tours";
+import { nextTourLabel, sortByTourTime, tourHref, type Tour, type TourTime } from "@/lib/tours";
 
 function tour(slug: string): Tour {
   return {
@@ -79,5 +79,11 @@ describe("nextTourLabel", () => {
 
   it("says the tour can't be seen when there is no tour time", () => {
     expect(nextTourLabel(null)).toBe("Not visible from your location");
+  });
+});
+
+describe("tourHref", () => {
+  it("is the /?tour= deep link the player starts from", () => {
+    expect(tourHref("winter-hexagon")).toBe("/?tour=winter-hexagon");
   });
 });

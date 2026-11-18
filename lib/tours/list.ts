@@ -2,6 +2,11 @@ import { formatClock } from "./labels";
 import { formatNightOf } from "./night-of";
 import type { Tour, TourTime } from "./types";
 
+/** The deep link that starts a tour, the one entry point every link uses. */
+export function tourHref(slug: string): string {
+  return `/?tour=${encodeURIComponent(slug)}`;
+}
+
 /** One row of the tours list: a tour and its tour time for the current observer. */
 export interface TourListEntry {
   tour: Tour;

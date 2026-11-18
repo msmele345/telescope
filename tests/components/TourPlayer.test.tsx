@@ -482,4 +482,12 @@ describe("tours list on the map", () => {
     expect(within(panel).getByText("Stop 1 of 5")).toBeInTheDocument();
     expect(within(panel).queryByRole("button", { name: "Stay here" })).not.toBeInTheDocument();
   });
+
+  it("keeps ← / → inside the list from moving a running tour between stops", async () => {
+    const { user, panel } = await openTour();
+    await user.click(screen.getByRole("button", { name: "Tours" }));
+    await screen.findByRole("list", { name: "Tours" });
+    await user.keyboard("{ArrowRight}");
+    expect(within(panel).getByText("Stop 1 of 5")).toBeInTheDocument();
+  });
 });
