@@ -12,11 +12,12 @@ import PlanetPopup from "@/components/PlanetPopup";
 import MessierPopup from "@/components/MessierPopup";
 import TourPanel from "@/components/tour/TourPanel";
 import TourNotice from "@/components/tour/TourNotice";
+import ToursMenu from "@/components/tour/ToursMenu";
 import { useTourPlayer } from "@/components/tour/useTourPlayer";
 import { loadCatalog, type Star } from "@/lib/star-catalog";
 import type { SolarBody } from "@/lib/solar-system";
 import { getMessierById, type MessierObject } from "@/lib/messier";
-import { jumpLabel, returnLabel } from "@/lib/tours";
+import { jumpLabel, returnLabel, tourHref } from "@/lib/tours";
 import {
   DEFAULT_OBSERVER,
   loadSavedObserver,
@@ -64,6 +65,8 @@ export default function Home() {
     () => observerRef.current ?? loadSavedObserver() ?? DEFAULT_OBSERVER,
     []
   );
+
+  const getRealNow = useCallback(() => new Date(controller.getRealMs()), [controller]);
 
   // A replace, not a push, so a refresh or Back doesn't restart the tour.
   const searchRef = useRef(searchParams);
@@ -190,6 +193,7 @@ export default function Home() {
         focus={cameraFocus}
       />
       <SkyDirectory onSelectStar={handleSelectStar} />
+      <ToursMenu getObserver={getObserver} getRealNow={getRealNow} />
       <LocationPrompt observer={observer} onResolve={handleResolve} />
       <TimeScrubber
         controller={controller}
@@ -220,7 +224,7 @@ export default function Home() {
         <StarPopup
           star={selection.data}
           onClose={handleClosePopup}
-          returnTo={selection.tourSlug ? `/?tour=${selection.tourSlug}` : undefined}
+          returnTo={selection.tourSlug ? tourHref(selection.tourSlug) : undefined}
         />
       )}
       {selection?.kind === "planet" && (

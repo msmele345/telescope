@@ -10,6 +10,8 @@ import { getConstellationMembers } from "@/lib/constellation/server";
 import ConstellationContent from "@/components/ConstellationContent";
 import ConstellationActions from "@/components/user/ConstellationActions";
 import MarkReadButton from "@/components/user/MarkReadButton";
+import AppearsIn from "@/components/tour/AppearsIn";
+import { getToursForConstellation } from "@/lib/tours/server";
 import { auth } from "@/auth";
 import { isFavorite, isRead, isViewed } from "@/lib/user-data";
 
@@ -44,9 +46,10 @@ export default async function ConstellationPage({ params }: PageProps) {
   if (!c) notFound();
 
   const Lesson = await loadLesson(c.slug);
-  const [members, session] = await Promise.all([
+  const [members, session, tours] = await Promise.all([
     Lesson ? null : getConstellationMembers(c.abbr),
     auth(),
+    getToursForConstellation(c.abbr),
   ]);
 
   const userId = session?.user?.id ?? null;
@@ -70,6 +73,7 @@ export default async function ConstellationPage({ params }: PageProps) {
         </p>
         <h1 style={titleStyle}>{c.name}</h1>
       </header>
+      <AppearsIn tours={tours} />
       <ConstellationActions
         slug={c.slug}
         isAuthenticated={isAuthenticated}
