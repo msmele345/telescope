@@ -6,7 +6,7 @@ import userEvent from "@testing-library/user-event";
 import type { ConstellationLines } from "@/lib/constellation";
 import type { Star } from "@/lib/star-catalog";
 import { DEFAULT_OBSERVER, type ObserverLocation } from "@/lib/observer";
-import { findTourTime, formatClock, formatNightOf, getTourBySlug, type Tour, type TourStop } from "@/lib/tours";
+import { findTourTime, formatClock, formatNightOf, type Tour, type TourStop } from "@/lib/tours";
 
 function readJson<T>(file: string): T {
   return JSON.parse(
@@ -33,7 +33,18 @@ function tour(slug: string, title: string, window: Tour["window"], stops: TourSt
   return { slug, title, summary: `${title} summary.`, window, stops };
 }
 
-const ORION = getTourBySlug("orion-fixture") as Tour;
+const ORION = tour(
+  "orion-fixture",
+  "Around Orion",
+  { from: { month: 12, day: 1 }, to: { month: 3, day: 31 } },
+  [
+    stop({ kind: "constellation", id: "Ori" }),
+    stop({ kind: "star", id: 2061 }),
+    stop({ kind: "star", id: 1790 }),
+    stop({ kind: "star", id: 1713 }),
+    stop({ kind: "messier", id: "M42" }),
+  ]
+);
 const SPRING = tour(
   "spring-fixture",
   "Spring Arc",

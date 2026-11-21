@@ -27,8 +27,8 @@ window, or drop the stop. Don't lower the 20° bar.
 
 **Blocked by:** #1 Tour format and the time-finder. Can run alongside #2–#4.
 
-- [ ] Four tour files exist with the stops above, and the fixture tour is removed.
-- [ ] The content test passes for all four from both 25°N and 49°N, including the 14-days-from-window-start check.
-- [ ] Every distance and magnitude in the commentary matches the catalogs.
+- [x] Four tour files exist with the stops above, and the fixture tour is removed.
+- [x] The content test passes for all four from both 25°N and 49°N, including the 14-days-from-window-start check.
+- [x] Every distance and magnitude in the commentary matches the catalogs.
 - [ ] Maintainer has reviewed and approved the commentary.
 - [ ] Once #3 has merged: each tour played end to end on a Vercel preview deploy.
