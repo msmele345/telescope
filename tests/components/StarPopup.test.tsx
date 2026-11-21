@@ -68,12 +68,12 @@ describe("<StarPopup />", () => {
 
   it("signs a visitor in back to a given place instead, e.g. the tour that opened it", async () => {
     render(
-      <StarPopup star={BETELGEUSE} onClose={() => {}} returnTo="/?tour=orion-fixture" />
+      <StarPopup star={BETELGEUSE} onClose={() => {}} returnTo="/?tour=winter-hexagon" />
     );
     const link = await screen.findByRole("link", {
       name: /sign in to favorite this star/i,
     });
-    expect(link).toHaveAttribute("href", "/login?returnTo=%2F%3Ftour%3Dorion-fixture");
+    expect(link).toHaveAttribute("href", "/login?returnTo=%2F%3Ftour%3Dwinter-hexagon");
   });
 
   it("falls back to HR id and hides the Distance row when distance is absent", () => {

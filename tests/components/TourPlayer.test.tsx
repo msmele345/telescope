@@ -54,21 +54,21 @@ const CATALOGS = {
   lines: JSON.parse(LINES_JSON) as ConstellationLines,
 };
 
-const TOUR = getTourBySlug("orion-fixture") as Tour;
+const TOUR = getTourBySlug("winter-hexagon") as Tour;
 const OBSERVER_KEY = "telescope:observer";
 const MINUTE = 60_000;
 
-/** Early afternoon in Kansas on a night the fixture is up: the tour time is tonight. */
+/** Early afternoon in Kansas on a night the tour is up: the tour time is tonight. */
 const TONIGHT_NOW = Date.UTC(2027, 0, 10, 20, 0);
-/** Before the fixture's window opens (Dec 1): the tour time is a later night. */
+/** Before the tour's window opens (Dec 1): the tour time is a later night. */
 const LATER_NOW = Date.UTC(2026, 10, 17, 20, 0);
 
-/** Where no fixture stop gets above 20°: Orion's stars never climb that high from 70°N. */
+/** Where Winter Hexagon never qualifies: Sirius never climbs above 20° from 70°N. */
 const ARCTIC = { lat: 70, lng: -150, label: "Arctic test observer" };
 
 function tourTimeFrom(nowMs: number, observer: ObserverLocation = DEFAULT_OBSERVER) {
   const time = findTourTime(TOUR, observer, new Date(nowMs), CATALOGS);
-  if (!time) throw new Error("fixture has no tour time");
+  if (!time) throw new Error("tour has no tour time");
   return time;
 }
 
@@ -89,11 +89,11 @@ function advance(ms: number) {
   vi.setSystemTime(Date.now() + ms);
 }
 
-async function openTour(search = "?tour=orion-fixture") {
+async function openTour(search = "?tour=winter-hexagon") {
   nav.search = search;
   const user = userEvent.setup();
   const view = render(<Home />);
-  const panel = await screen.findByRole("region", { name: /tour: around orion/i });
+  const panel = await screen.findByRole("region", { name: /tour: winter hexagon/i });
   return { user, view, panel };
 }
 
@@ -136,7 +136,7 @@ describe("tour player: starting", () => {
   it("starts /?tour=<slug> at stop 1 with no confirmation step", async () => {
     const { panel } = await openTour();
     expect(within(panel).getByRole("heading", { name: "Orion, the Hunter" })).toBeInTheDocument();
-    expect(within(panel).getByText("Stop 1 of 5")).toBeInTheDocument();
+    expect(within(panel).getByText("Stop 1 of 7")).toBeInTheDocument();
     expect(canvas.props?.focus).toMatchObject({ kind: "constellation", id: "Ori" });
   });
 
@@ -188,11 +188,11 @@ describe("tour player: starting", () => {
 describe("tour player: no tour time", () => {
   it("shows a dismissible notice, doesn't start, and leaves time and view untouched", async () => {
     saveObserver(ARCTIC);
-    nav.search = "?tour=orion-fixture";
+    nav.search = "?tour=winter-hexagon";
     const user = userEvent.setup();
     render(<Home />);
 
-    const notice = await screen.findByText("Around Orion isn't visible from your location");
+    const notice = await screen.findByText("Winter Hexagon isn't visible from your location");
     expect(screen.queryByRole("region", { name: /tour:/i })).not.toBeInTheDocument();
     expect(canvas.props?.focus ?? null).toBeNull();
     expect(screen.getByRole("button", { name: /pause/i })).toBeEnabled();
@@ -216,14 +216,14 @@ describe("tour player: a second tour", () => {
     saveObserver(ARCTIC);
     nav.search = "";
     view.rerender(<Home />);
-    nav.search = "?tour=orion-fixture";
+    nav.search = "?tour=winter-hexagon";
     view.rerender(<Home />);
 
     expect(
-      await screen.findByText("Around Orion isn't visible from your location")
+      await screen.findByText("Winter Hexagon isn't visible from your location")
     ).toBeInTheDocument();
-    const still = screen.getByRole("region", { name: /tour: around orion/i });
-    expect(within(still).getByText("Stop 2 of 5")).toBeInTheDocument();
+    const still = screen.getByRole("region", { name: /tour: winter hexagon/i });
+    expect(within(still).getByText("Stop 2 of 7")).toBeInTheDocument();
     expect(scrubberGroup()).toHaveAttribute("title", "Time is set by the tour. Exit to change it.");
     expect(within(scrubberGroup()).getByText(readout(time.at.getTime()))).toBeInTheDocument();
     await user.click(within(still).getByRole("button", { name: "Exit" }));
@@ -251,7 +251,7 @@ describe("tour player: moving between stops", () => {
 
     await user.click(within(panel).getByRole("button", { name: "Next" }));
     expect(within(panel).getByRole("heading", { name: "Betelgeuse" })).toBeInTheDocument();
-    expect(within(panel).getByText("Stop 2 of 5")).toBeInTheDocument();
+    expect(within(panel).getByText("Stop 2 of 7")).toBeInTheDocument();
     expect(canvas.props?.focus).toMatchObject({ kind: "star", id: 2061 });
 
     await user.click(within(panel).getByRole("button", { name: "Back" }));
@@ -261,17 +261,17 @@ describe("tour player: moving between stops", () => {
   it("moves with the arrow keys, and not while typing in a field", async () => {
     const { user, panel } = await openTour();
     await user.keyboard("{ArrowRight}");
-    expect(within(panel).getByText("Stop 2 of 5")).toBeInTheDocument();
+    expect(within(panel).getByText("Stop 2 of 7")).toBeInTheDocument();
     await user.keyboard("{ArrowRight}");
-    expect(within(panel).getByText("Stop 3 of 5")).toBeInTheDocument();
+    expect(within(panel).getByText("Stop 3 of 7")).toBeInTheDocument();
     await user.keyboard("{ArrowLeft}");
-    expect(within(panel).getByText("Stop 2 of 5")).toBeInTheDocument();
+    expect(within(panel).getByText("Stop 2 of 7")).toBeInTheDocument();
 
     const input = document.createElement("input");
     document.body.appendChild(input);
     input.focus();
     await user.keyboard("{ArrowRight}");
-    expect(within(panel).getByText("Stop 2 of 5")).toBeInTheDocument();
+    expect(within(panel).getByText("Stop 2 of 7")).toBeInTheDocument();
     input.remove();
   });
 
@@ -296,19 +296,19 @@ describe("tour player: moving between stops", () => {
     expect(screen.getByRole("dialog", { name: "Betelgeuse" })).toBeInTheDocument();
     expect(within(panel).queryByRole("link", { name: /read the full lesson/i })).not.toBeInTheDocument();
 
-    await user.keyboard("{ArrowRight}{ArrowRight}{ArrowRight}");
-    expect(within(panel).getByText("Stop 5 of 5")).toBeInTheDocument();
+    await user.keyboard("{ArrowRight}");
+    expect(within(panel).getByText("Stop 3 of 7")).toBeInTheDocument();
     expect(screen.getByRole("dialog", { name: "Orion Nebula" })).toBeInTheDocument();
 
     await user.click(within(panel).getByRole("button", { name: "Back" }));
-    expect(screen.getByRole("dialog", { name: "Rigel" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Betelgeuse" })).toBeInTheDocument();
   });
 
   it("signs in from a tour popup back to the tour", async () => {
     const { user, panel } = await openTour();
     await user.click(within(panel).getByRole("button", { name: "Next" }));
     const link = await screen.findByRole("link", { name: /sign in to favorite this star/i });
-    expect(link).toHaveAttribute("href", "/login?returnTo=%2F%3Ftour%3Dorion-fixture");
+    expect(link).toHaveAttribute("href", "/login?returnTo=%2F%3Ftour%3Dwinter-hexagon");
   });
 
   it("lets Esc close an open popup before it exits the tour", async () => {
@@ -342,7 +342,7 @@ describe("tour player: leaving", () => {
     expect(within(panel).getByRole("button", { name: "Stay here" })).toBeInTheDocument();
 
     await user.click(within(panel).getByRole("button", { name: /back to the tour/i }));
-    expect(within(panel).getByText("Stop 1 of 5")).toBeInTheDocument();
+    expect(within(panel).getByText("Stop 1 of 7")).toBeInTheDocument();
 
     await user.keyboard("{Escape}");
     expect(within(panel).getByRole("button", { name: "Stay here" })).toBeInTheDocument();
@@ -350,7 +350,9 @@ describe("tour player: leaving", () => {
 
   it("offers the same choice after the last stop", async () => {
     const { user, panel } = await openTour();
-    await user.keyboard("{ArrowRight}{ArrowRight}{ArrowRight}{ArrowRight}");
+    await user.keyboard(
+      "{ArrowRight}{ArrowRight}{ArrowRight}{ArrowRight}{ArrowRight}{ArrowRight}"
+    );
     await user.click(within(panel).getByRole("button", { name: "Finish" }));
     expect(within(panel).getByText(/end of the tour/i)).toBeInTheDocument();
     expect(within(panel).getByRole("button", { name: "Stay here" })).toBeInTheDocument();
@@ -383,9 +385,9 @@ describe("tour player: leaving", () => {
     expect(screen.getByText(readout(before.getTime()))).toBeInTheDocument();
 
     // A tour started mid-session, as the tours list will.
-    nav.search = "?tour=orion-fixture";
+    nav.search = "?tour=winter-hexagon";
     rerender(<Home />);
-    const panel = await screen.findByRole("region", { name: /tour: around orion/i });
+    const panel = await screen.findByRole("region", { name: /tour: winter hexagon/i });
     advance(10 * MINUTE);
     await user.click(within(panel).getByRole("button", { name: "Exit" }));
     await user.click(within(panel).getByRole("button", { name: "Return to Jan 12, 9:10pm" }));
@@ -412,7 +414,7 @@ describe("tour player: leaving", () => {
   it.each(["Return to now", "Stay here"])(
     "%s zooms back out and removes ?tour= from the URL with a replace",
     async (choice) => {
-      const { user, panel } = await openTour("?tour=orion-fixture&foo=1");
+      const { user, panel } = await openTour("?tour=winter-hexagon&foo=1");
       await user.click(within(panel).getByRole("button", { name: "Next" }));
       await user.click(within(panel).getByRole("button", { name: "Exit" }));
       await user.click(within(panel).getByRole("button", { name: choice }));
@@ -460,7 +462,7 @@ describe("tours list on the map", () => {
     expect(item).toBeDefined();
     const time = tourTimeFrom(TONIGHT_NOW);
     expect(item).toHaveTextContent(`Next: Tonight ${formatClock(time.at)}`);
-    expect(within(item!).getByRole("link")).toHaveAttribute("href", "/?tour=orion-fixture");
+    expect(within(item!).getByRole("link")).toHaveAttribute("href", "/?tour=winter-hexagon");
   });
 
   it("finds tour times for the saved observer, not the default", async () => {
@@ -469,8 +471,12 @@ describe("tours list on the map", () => {
     render(<Home />);
     await user.click(screen.getByRole("button", { name: "Tours" }));
     const list = await screen.findByRole("list", { name: "Tours" });
-    expect(within(list).getByText("Not visible from your location")).toBeInTheDocument();
-    expect(within(list).queryByRole("link")).not.toBeInTheDocument();
+    const item = within(list)
+      .getAllByRole("listitem")
+      .find((li) => within(li).queryByRole("heading", { name: TOUR.title }));
+    expect(item).toBeDefined();
+    expect(within(item!).getByText("Not visible from your location")).toBeInTheDocument();
+    expect(within(item!).queryByRole("link")).not.toBeInTheDocument();
   });
 
   it("closes on Esc without leaving a running tour", async () => {
@@ -479,7 +485,7 @@ describe("tours list on the map", () => {
     await screen.findByRole("list", { name: "Tours" });
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("list", { name: "Tours" })).not.toBeInTheDocument();
-    expect(within(panel).getByText("Stop 1 of 5")).toBeInTheDocument();
+    expect(within(panel).getByText("Stop 1 of 7")).toBeInTheDocument();
     expect(within(panel).queryByRole("button", { name: "Stay here" })).not.toBeInTheDocument();
   });
 
@@ -488,6 +494,6 @@ describe("tours list on the map", () => {
     await user.click(screen.getByRole("button", { name: "Tours" }));
     await screen.findByRole("list", { name: "Tours" });
     await user.keyboard("{ArrowRight}");
-    expect(within(panel).getByText("Stop 1 of 5")).toBeInTheDocument();
+    expect(within(panel).getByText("Stop 1 of 7")).toBeInTheDocument();
   });
 });
