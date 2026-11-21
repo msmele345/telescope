@@ -1,7 +1,3 @@
-## WHAT — Stack & Structure
-- Runtime: Node.js 22, npm 10.9.4
-- DB: Postgres on Neon (via the Vercel Marketplace integration)
-
 ###
 Project Context and Glossary: `CONTEXT.md` (read this first)
 
@@ -57,13 +53,12 @@ holding another application's tables; override with `npm run db:migrate -- --sha
 that co-tenancy is known and intended.
 
 ## Cadences to follow:
-1. TDD on any new feature code or bug fixes. Use Test Driven Development whenever possible. See the /tdd skill.
-2. Red green refactor. Reference the tdd skill and follow it.
-3. Always check off tracer bullet boxes in issues or tickets worked when finished to verify competion.
-4. When looking for skills, always check .agents/skills first. 
+1. TDD (red → green → refactor) on all new feature code and bug fixes — follow the /tdd skill.
+2. Always check off tracer bullet boxes in issues or tickets worked when finished to verify competion.
+3. When looking for skills, always check .agents/skills first. 
 
 # Git Strategy and Instructions
-- Create feature branches off of develop for each new feature or task. Name branches using the format `feat/short-description` (e.g., `feat/spotify-integration`).
+- Create feature branches off of develop for each new feature or task. Name branches using the format `feat/short-description` (e.g., `feat/guided-tours`).
 - Git Strategy is Git Flow with the following branches:
   - `main` - production ready code
   - `develop` - latest development code, merged from feature branches
@@ -71,9 +66,4 @@ that co-tenancy is known and intended.
   - `release/*` - created from develop when preparing for a release, merged into main
 - PRs should be used to merge feature branches into develop, and release branches into main. PRs should be reviewed and approved by me before merging.
 - Use Squash and Merge for all PRs to keep a clean commit history.
-- Commit messages should follow best practices and use the format: (feat:, chore:, fix:, docs:, refactor:) Examples: 
-  - `feat: add new widget for genre breakdown`
-  - `chore: minor tasks like updating dependencies or fixing typos`
-  - `fix: resolve bug in Spotify API integration` 
-  - `docs: update README with setup instructions`
-  - `refactor: service layer redesign`
+- Commit messages use `feat:`, `fix:`, `chore:`, `docs:`, `refactor:` prefixes (e.g. `feat: add guided tour player`).
